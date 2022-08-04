@@ -62,7 +62,8 @@ dependencies and a version of `json-stream` with
 
 ```bash
 pip install json_stream_rs_tokenizer[benchmark]
-pip install git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types
+pip install --ignore-installed \
+  git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types
 ```
 
 You can then run the benchmark as follows:
