@@ -52,6 +52,24 @@ in manually using `json_stream_rs_tokenizer.patch()`, which should be safe if
 you do it before you spawn any threads, and then just call the original (but
 now patched) `json_stream.load` and `json_stream.visit` functions.
 
+## Benchmarks
+
+The package comes with a script for rudimentary benchmarks on randomly
+generated JSON data. To run it, you'll need to install the optional `benchmark`
+dependencies and a version of `json-stream` with
+[this patch](https://github.com/daggaz/json-stream/pull/17) applied:
+
+```bash
+pip install json_stream_rs_tokenizer[benchmark]
+pip install git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types
+```
+
+You can then run the benchmark as follows:
+
+```bash
+python -m json_stream_rs_tokenizer.benchmark
+```
+
 ## License
 
 MIT license. Refer to the
