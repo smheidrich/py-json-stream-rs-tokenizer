@@ -50,4 +50,6 @@ now patched) `json_stream.load` and `json_stream.visit` functions.
 
 ## License
 
-MIT license. See the [LICENSE](LICENSE) file for details.
+MIT license. Refer to the
+[LICENSE](https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/LICENSE)
+file for details.
