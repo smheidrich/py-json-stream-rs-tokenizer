@@ -14,7 +14,7 @@ def shuffled(l):
     return random.sample(l, k=len(l))
 
 
-def main():
+def main(json_bytes=2e6):
     try:
         js.to_standard_types
     except NameError:
@@ -26,7 +26,9 @@ def main():
     with TemporaryDirectory() as tmp_dir:
         random_json_file_path = Path(tmp_dir) / "random.json"
         print("generating random json...")
-        random_json_str = RandomJsonGenerator().random_list(target_len=100)
+        random_json_str = RandomJsonGenerator().random_list(
+            max_bytes=json_bytes, target_len=100
+        )
         random_json_size = len(random_json_str.encode("utf-8"))
         print(
             f"generated random json {random_json_file_path} "
@@ -48,5 +50,6 @@ def main():
         assert (
             results["python"]["parsed"] == results["rust"]["parsed"]
         ), "BUG: Rust and Py results differ!"
-        speedup = results["python"]["elapsed"]/results["rust"]["elapsed"]
+        speedup = results["python"]["elapsed"] / results["rust"]["elapsed"]
         print(f"speedup: {speedup:.2f}")
+    return speedup
