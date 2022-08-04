@@ -47,3 +47,7 @@ in this way is generally *not thread-safe*. As an alternative, you can patch it
 in manually using `json_stream_rs_tokenizer.patch()`, which should be safe if
 you do it before you spawn any threads, and then just call the original (but
 now patched) `json_stream.load` and `json_stream.visit` functions.
+
+## License
+
+MIT license. See the [LICENSE](LICENSE) file for details.
