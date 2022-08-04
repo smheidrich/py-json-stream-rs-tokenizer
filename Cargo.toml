@@ -1,0 +1,18 @@
+[package]
+name = "json-stream-rs-tokenizer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "json_stream_rs_tokenizer"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.16.5", features = ["extension-module"] }
+pyo3-file = "0.5.0"
+utf8-chars = "2.0.2"
+
+[patch.crates-io.pyo3-file]
+git = 'https://github.com/smheidrich/pyo3-file.git'
+branch = 'divide-buf-length-by-4-to-fix-textio-bug'
