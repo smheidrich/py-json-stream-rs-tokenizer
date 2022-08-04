@@ -1,5 +1,9 @@
 # json-stream-rs-tokenizer
 
+[![CI](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml/badge.svg)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml)
+[![PyPI](https://img.shields.io/pypi/pyversions/json-stream-rs-tokenizer?style=plastic)](https://pypi.org/project/json-stream-rs-tokenizer/)
+[![Tag](https://img.shields.io/github/v/tag/smheidrich/py-json-stream-rs-tokenizer?style=plastic)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/tags)
+
 A faster tokenizer for the [json-stream](https://github.com/daggaz/json-stream)
 Python library.
 
@@ -14,11 +18,11 @@ nature of the data.
 ## Installation
 
 ```bash
-pip install git+https://github.com/smheidrich/py-json-stream-rs-tokenizer.git
+pip install json-stream-rs-tokenizer
 ```
 
-**Note** that in editable installs, it will sometimes (?) compile the Rust
-library in debug mode, which makes it run *slower* than the pure-Python
+**Note** that in editable/develop installs, it will sometimes (?) compile the
+Rust library in debug mode, which makes it run *slower* than the pure-Python
 tokenizer. When in doubt, run installation commands with `--verbose` to see the
 Rust compilation commands and verify that they used `--release`.
 
