@@ -8,7 +8,7 @@ It's actually just `json-stream`'s own tokenizer (itself adapted from the
 verbatim and made available as a Python module using
 [PyO3](https://github.com/PyO3/pyo3).
 
-On my machine, it **speeds up parsing by a factor of 4-10**, depending on the
+On my machine, it **speeds up parsing by a factor of 4–10**, depending on the
 nature of the data.
 
 ## Installation
