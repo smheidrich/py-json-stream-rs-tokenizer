@@ -45,3 +45,23 @@ def patch():
     operation.
     """
     return patched()
+
+
+def load(fp, persistent=False):
+    """
+    Run json-stream's `load` but using the Rust tokenizer.
+    """
+    import json_stream
+
+    with patched_loader():
+        return json_stream.load(fp, persistent)
+
+
+def visit(fp, visitor):
+    """
+    Run json-stream's `visit` but using the Rust tokenizer.
+    """
+    import json_stream
+
+    with patched_loader():
+        return json_stream.visit(fp, visitor)
