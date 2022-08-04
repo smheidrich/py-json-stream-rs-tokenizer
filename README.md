@@ -1,8 +1,8 @@
 # json-stream-rs-tokenizer
 
-[![CI](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml/badge.svg)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml)
-[![PyPI](https://img.shields.io/pypi/pyversions/json-stream-rs-tokenizer)](https://pypi.org/project/json-stream-rs-tokenizer/)
-[![Tag](https://img.shields.io/github/v/tag/smheidrich/py-json-stream-rs-tokenizer)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/tags)
+[![CI badge](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml/badge.svg)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/CI.yml)
+[![PyPI package and version badge](https://img.shields.io/pypi/v/json-stream-rs-tokenizer)](https://pypi.org/project/json-stream-rs-tokenizer/)
+[![Supported Python versions badge](https://img.shields.io/pypi/pyversions/json-stream-rs-tokenizer)](https://pypi.org/project/json-stream-rs-tokenizer/)
 
 A faster tokenizer for the [json-stream](https://github.com/daggaz/json-stream)
 Python library.
