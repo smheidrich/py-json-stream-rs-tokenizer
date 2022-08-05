@@ -36,7 +36,7 @@ running them:
 
 ```python
 from io import StringIO
-import json_stream_rs_tokenizer import load
+from json_stream_rs_tokenizer import load
 
 # uses the Rust tokenizer to load JSON:
 d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
