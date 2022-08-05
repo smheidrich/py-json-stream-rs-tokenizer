@@ -29,29 +29,33 @@ Rust compilation commands and verify that they used `--release`.
 
 ## Usage
 
-Because `json-stream` currently has no mechanism to provide a custom tokenizer
-(which I would prefer), this package provides its own wrappres around
-json_stream's `load` and `visit` functions that monkeypatch it in before
-running them:
+To use this package's `RustTokenizer`, simply pass it as the `tokenizer`
+argument to `json-stream`'s `load` or `visit`:
 
 ```python
 from io import StringIO
-from json_stream_rs_tokenizer import load
+from json_stream import load
+from json_stream_rs_tokenizer import RustTokenizer
+
+json_buf = StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }')
 
 # uses the Rust tokenizer to load JSON:
-d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
+d = load(json_buf, tokenizer=RustTokenizer)
 
 for k, l in d.items():
   print(f"{k}: {' '.join(str(n) for n in l)}")
 ```
 
-The patching is undone when the function returns.
+As a perhaps slightly more convenient alternative, the package also provides
+wrappers around json_stream's `load` and `visit` functions that do it for you:
 
-Due to patching being a global state mutation, using `json-stream-rs-tokenizer`
-in this way is generally *not thread-safe*. As an alternative, you can patch it
-in manually using `json_stream_rs_tokenizer.patch()`, which should be safe if
-you do it before you spawn any threads, and then just call the original (but
-now patched) `json_stream.load` and `json_stream.visit` functions.
+```python
+from json_stream_rs_tokenizer import load
+
+d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
+
+# ...
+```
 
 ## Benchmarks
 
