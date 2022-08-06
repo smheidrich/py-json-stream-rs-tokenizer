@@ -1,50 +1,4 @@
-from unittest.mock import patch as mock_patch
-from contextlib import contextmanager
-
-
-@contextmanager
-def patched():
-    """
-    Context manager that patches json-stream to use the Rust tokenizer.
-
-    The patch will be undone upon leaving the context.
-    """
-    with patched_loader(), patched_visitor():
-        yield
-
-
-@contextmanager
-def patched_loader():
-    """
-    Like `patched`, but only patches `load` to use the Rust tokenizer.
-    """
-    from .json_stream_rs_tokenizer import RustTokenizer
-
-    with mock_patch("json_stream.loader.tokenize", new=RustTokenizer):
-        yield
-
-
-@contextmanager
-def patched_visitor():
-    """
-    Like `patched`, but only patches `visit` to use the Rust tokenizer.
-    """
-    from .json_stream_rs_tokenizer import RustTokenizer
-
-    with mock_patch("json_stream.visitor.tokenize", new=RustTokenizer):
-        yield
-
-
-def patch():
-    """
-    Non-context-manager version of `patched`.
-
-    Actually just calls `patched()` without `with` so it never exits (so if you
-    want to undo the patch explicitly, just call the returned object's
-    `__exit__`), but the name makes more sense for a non-context-manager
-    operation.
-    """
-    return patched()
+from .json_stream_rs_tokenizer import RustTokenizer
 
 
 def load(fp, persistent=False):
@@ -53,8 +7,7 @@ def load(fp, persistent=False):
     """
     import json_stream
 
-    with patched_loader():
-        return json_stream.load(fp, persistent)
+    return json_stream.load(fp, persistent, tokenizer=RustTokenizer)
 
 
 def visit(fp, visitor):
@@ -63,5 +16,6 @@ def visit(fp, visitor):
     """
     import json_stream
 
-    with patched_loader():
-        return json_stream.visit(fp, visitor)
+    return json_stream.visit(fp, visitor, tokenizer=RustTokenizer)
+
+__all__ = ["RustTokenizer", "load", "visit"]
