@@ -1,4 +1,4 @@
-from json_stream_rs_tokenizer.benchmark import main
+from json_stream_rs_tokenizer.benchmark.app import main
 
 
 def test_via_benchmark():

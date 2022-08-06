@@ -76,6 +76,8 @@ You can then run the benchmark as follows:
 python -m json_stream_rs_tokenizer.benchmark
 ```
 
+Run it with `--help` to see more information.
+
 ## License
 
 MIT license. Refer to the
