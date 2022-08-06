@@ -37,8 +37,10 @@ class RandomJsonGenerator:
             while bytes_here < max_bytes:
                 if bytes_here > 2:  # i.e. not first
                     bytes_here += 2  # ", "
+                elems_left = n_elems-len(l)
+                bytes_left = max_bytes-bytes_here
                 elem, elem_bytes = random.choice(elem_types)(
-                    depth + 1, max_bytes / n_elems
+                    depth + 1, bytes_left / (elems_left or -1)
                 )
                 bytes_here += elem_bytes
                 l.append(elem)
