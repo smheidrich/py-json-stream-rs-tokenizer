@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import random
 from tempfile import TemporaryDirectory
@@ -35,21 +36,30 @@ def main(json_bytes=2e6):
             f"with size {random_json_size:.3e} bytes"
         )
         random_json_file_path.write_text(random_json_str)
-        results = {"python": {}, "rust": {}}
+        results = {"python": {}, "rust": {}, "non-streaming": {}}
         for tokenizer_type, load_fn in shuffled(
-            [("python", js.load), ("rust", jsrs.load)]
+            [
+                ("python", js.load),
+                ("rust", jsrs.load),
+                ("non-streaming", json.load),
+            ]
         ):
             print(f"running with {tokenizer_type} tokenizer")
-            with random_json_file_path.open() as f:
-                l = load_fn(f)
-                with Timer() as t:
-                    parsed = [js.to_standard_types(x) for x in tqdm(l)]
-                print(f"{tokenizer_type} time: {t.elapsed:.2f} s")
-                results[tokenizer_type]["elapsed"] = t.elapsed
-                results[tokenizer_type]["parsed"] = parsed
+            with Timer() as t:
+                with random_json_file_path.open() as f:
+                    l = load_fn(f)
+                    parsed = [
+                        js.to_standard_types(x) for x in tqdm(l, total=100)
+                    ]
+            print(f"{tokenizer_type} time: {t.elapsed:.2f} s")
+            results[tokenizer_type]["elapsed"] = t.elapsed
+            results[tokenizer_type]["parsed"] = parsed
         assert (
             results["python"]["parsed"] == results["rust"]["parsed"]
         ), "BUG: Rust and Py results differ!"
+        assert (
+            results["non-streaming"]["parsed"] == results["rust"]["parsed"]
+        ), "BUG: non-streaming and streaming results differ!"
         speedup = results["python"]["elapsed"] / results["rust"]["elapsed"]
         print(f"speedup: {speedup:.2f}")
     return speedup
