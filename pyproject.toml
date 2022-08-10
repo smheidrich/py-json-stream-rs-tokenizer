@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "json-stream-rs-tokenizer"
-version = "0.2.5"
+version = "0.2.6"
 description = "A faster tokenizer for the json-stream Python library"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -33,4 +33,4 @@ benchmark = [
 test = ["pytest>7.1,<8"]
 
 [project.urls]
-repository = "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
+Repository = "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
