@@ -9,7 +9,8 @@ name = "json_stream_rs_tokenizer"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.16.5", features = ["extension-module"] }
+num-bigint = "0.4.3"
+pyo3 = { version = "0.16.5", features = ["extension-module", "num-bigint"] }
 pyo3-file = "0.5.0"
 utf8-chars = "2.0.2"
 

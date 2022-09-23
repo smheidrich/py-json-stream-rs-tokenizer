@@ -4,12 +4,14 @@
 /// json-stream's tokenizer was originally taken from the NAYA project.
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
+use num_bigint::BigInt;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::str::FromStr;
 use utf8_chars::BufReadCharsExt;
 
 #[derive(Clone)]
@@ -254,7 +256,21 @@ impl RustTokenizer {
                     slf.completed = true;
                     now_token = Some((
                         TokenType::Number,
-                        Some(slf.token.parse::<i64>()?.into_py(py)),
+                        match slf.token.parse::<i64>() {
+                            Ok(parsed_num) => {
+                                Some(parsed_num.into_py(py))
+                            },
+                            Err(_) => {
+                                Some(
+                                    match BigInt::from_str(&slf.token) {
+                                        Ok(parsed_num) => parsed_num.into_py(py),
+                                        Err(e) => {
+                                            return Err(PyValueError::new_err(format!("Error parsing integer: {e:?}")));
+                                        }
+                                    }
+                                )
+                            }
+                        },
                     ));
                     slf.advance = false;
                 }
