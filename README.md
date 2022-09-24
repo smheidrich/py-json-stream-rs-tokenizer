@@ -60,10 +60,13 @@ d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
 
 ## Limitations
 
-- Arbitrary-size integers are not supported for PyPy nor when the extension is
-  built against Python's limited C API (`Py_LIMITED_API`). This is due to a
-  limitation of PyO3's
+- Arbitrary-size integers are not currently supported for PyPy nor when the
+  extension is built against Python's limited C API (`Py_LIMITED_API`). This is
+  due to a limitation of PyO3's
   [`num-bigint` extension](https://pyo3.rs/main/doc/pyo3/num_bigint/).
+  However, [PyO3 PR #2626](https://github.com/PyO3/pyo3/pull/2626), which lifts
+  the restriction for PyPy, has been merged into PyO3 main and is expected to
+  make it into a release sooner or later.
 
 ## Benchmarks
 
