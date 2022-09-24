@@ -4,15 +4,17 @@
 /// json-stream's tokenizer was originally taken from the NAYA project.
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
-use num_bigint::{BigInt, ParseBigIntError};
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
 use std::io::BufRead;
 use std::io::BufReader;
-use std::str::FromStr;
 use utf8_chars::BufReadCharsExt;
+
+mod int;
+use crate::int::AppropriateInt;
+use std::str::FromStr;
 
 #[derive(Clone)]
 enum TokenType {
@@ -72,36 +74,6 @@ fn is_delimiter(c: char) -> bool {
 impl IntoPy<PyObject> for TokenType {
     fn into_py(self, py: Python<'_>) -> PyObject {
         (self as u32).into_py(py)
-    }
-}
-
-enum AppropriateInt {
-    Normal(i64),
-    Big(BigInt),
-}
-
-impl FromStr for AppropriateInt {
-    type Err = ParseBigIntError;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<AppropriateInt, ParseBigIntError> {
-        match s.parse::<i64>() {
-            Ok(parsed_num) => {
-                Ok(AppropriateInt::Normal(parsed_num))
-            },
-            Err(_) => {
-                Ok(AppropriateInt::Big(BigInt::from_str(s)?))
-            }
-        }
-    }
-}
-
-impl IntoPy<PyObject> for AppropriateInt {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        match self {
-            AppropriateInt::Normal(num) => { num.into_py(py) },
-            AppropriateInt::Big(num) => { num.into_py(py) },
-        }
     }
 }
 
