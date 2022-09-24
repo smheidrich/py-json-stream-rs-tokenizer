@@ -22,7 +22,6 @@ pub enum AppropriateInt {
     Normal(i64),
 }
 
-#[cfg(all())]
 impl FromStr for AppropriateInt {
     type Err = ParseIntError;
 
@@ -33,12 +32,12 @@ impl FromStr for AppropriateInt {
                 Ok(AppropriateInt::Normal(parsed_num))
             },
             Err(e) if e.to_string().contains("number too") => {
-                #[cfg(all(not(any(Py_LIMITED_API, PyPy))))]
+                #[cfg(not(any(Py_LIMITED_API, PyPy)))]
                 match BigInt::from_str(s) {
                     Ok(parsed_num) => Ok(AppropriateInt::Big(parsed_num)),
                     Err(e) => Err(ParseIntError{message: format!("{e:?}")}),
                 }
-                #[cfg(all(any(Py_LIMITED_API, PyPy)))]
+                #[cfg(any(Py_LIMITED_API, PyPy))]
                 {
                     e
                 }
@@ -50,15 +49,14 @@ impl FromStr for AppropriateInt {
     }
 }
 
-#[cfg(all())]
 impl IntoPy<PyObject> for AppropriateInt {
     fn into_py(self, py: Python<'_>) -> PyObject {
-        #![cfg(all(not(any(Py_LIMITED_API, PyPy))))]
+        #![cfg(not(any(Py_LIMITED_API, PyPy)))]
         match self {
             AppropriateInt::Normal(num) => { num.into_py(py) },
             AppropriateInt::Big(num) => { num.into_py(py) },
         }
-        #[cfg(all(any(Py_LIMITED_API, PyPy)))]
+        #[cfg(any(Py_LIMITED_API, PyPy))]
         match self {
             AppropriateInt::Normal(num) => { num.into_py(py) },
         }
