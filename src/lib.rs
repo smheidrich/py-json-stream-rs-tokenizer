@@ -12,6 +12,10 @@ use std::io::BufRead;
 use std::io::BufReader;
 use utf8_chars::BufReadCharsExt;
 
+mod int;
+use crate::int::AppropriateInt;
+use std::str::FromStr;
+
 #[derive(Clone)]
 enum TokenType {
     Operator = 0,
@@ -252,10 +256,19 @@ impl RustTokenizer {
                 _ if is_delimiter(c) => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::Number,
-                        Some(slf.token.parse::<i64>()?.into_py(py)),
-                    ));
+                    match AppropriateInt::from_str(&slf.token) {
+                        Ok(parsed_num) => {
+                            now_token = Some((
+                                TokenType::Number,
+                                Some(parsed_num.into_py(py))
+                            ));
+                        },
+                        Err(e) => {
+                            return Err(PyValueError::new_err(format!(
+                                "Error parsing integer (this should never happen): {e:?}"
+                            )));
+                        }
+                    }
                     slf.advance = false;
                 }
                 _ => {

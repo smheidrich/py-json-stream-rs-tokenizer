@@ -47,7 +47,8 @@ for k, l in d.items():
 ```
 
 As a perhaps slightly more convenient alternative, the package also provides
-wrappers around json_stream's `load` and `visit` functions that do it for you:
+wrappers around json_stream's `load` and `visit` functions which do this for
+you:
 
 ```python
 from json_stream_rs_tokenizer import load
@@ -56,6 +57,13 @@ d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
 
 # ...
 ```
+
+## Limitations
+
+- Arbitrary-size integers are not supported for PyPy nor when the extension is
+  built against Python's limited C API (`Py_LIMITED_API`). This is due to a
+  limitation of PyO3's
+  [`num-bigint` extension](https://pyo3.rs/main/doc/pyo3/num_bigint/).
 
 ## Benchmarks
 
