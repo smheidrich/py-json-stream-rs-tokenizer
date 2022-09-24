@@ -12,6 +12,7 @@ pub struct ParseIntError {
 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
 use num_bigint::BigInt;
 
+#[cfg(not(any(Py_LIMITED_API, PyPy)))]
 pub enum AppropriateInt {
     Normal(i64),
     Big(BigInt),
@@ -39,7 +40,7 @@ impl FromStr for AppropriateInt {
                 }
                 #[cfg(any(Py_LIMITED_API, PyPy))]
                 {
-                    e
+                    Err(ParseIntError{message: format!("{e:?}")})
                 }
             }
             Err(e) => {
@@ -51,7 +52,7 @@ impl FromStr for AppropriateInt {
 
 impl IntoPy<PyObject> for AppropriateInt {
     fn into_py(self, py: Python<'_>) -> PyObject {
-        #![cfg(not(any(Py_LIMITED_API, PyPy)))]
+        #[cfg(not(any(Py_LIMITED_API, PyPy)))]
         match self {
             AppropriateInt::Normal(num) => { num.into_py(py) },
             AppropriateInt::Big(num) => { num.into_py(py) },

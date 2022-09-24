@@ -15,7 +15,7 @@ pyo3-file = "0.5.0"
 utf8-chars = "2.0.2"
 
 [build-dependencies]
-pyo3-build-config = "0.17.1"
+pyo3-build-config = { version = "0.17.1", features = ["resolve-config"] }
 
 [patch.crates-io.pyo3-file]
 git = 'https://github.com/smheidrich/pyo3-file.git'
