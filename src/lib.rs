@@ -4,7 +4,7 @@
 /// json-stream's tokenizer was originally taken from the NAYA project.
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
-use num_bigint::BigInt;
+use num_bigint::{BigInt, ParseBigIntError};
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
@@ -72,6 +72,36 @@ fn is_delimiter(c: char) -> bool {
 impl IntoPy<PyObject> for TokenType {
     fn into_py(self, py: Python<'_>) -> PyObject {
         (self as u32).into_py(py)
+    }
+}
+
+enum AppropriateInt {
+    Normal(i64),
+    Big(BigInt),
+}
+
+impl FromStr for AppropriateInt {
+    type Err = ParseBigIntError;
+
+    #[inline]
+    fn from_str(s: &str) -> Result<AppropriateInt, ParseBigIntError> {
+        match s.parse::<i64>() {
+            Ok(parsed_num) => {
+                Ok(AppropriateInt::Normal(parsed_num))
+            },
+            Err(_) => {
+                Ok(AppropriateInt::Big(BigInt::from_str(s)?))
+            }
+        }
+    }
+}
+
+impl IntoPy<PyObject> for AppropriateInt {
+    fn into_py(self, py: Python<'_>) -> PyObject {
+        match self {
+            AppropriateInt::Normal(num) => { num.into_py(py) },
+            AppropriateInt::Big(num) => { num.into_py(py) },
+        }
     }
 }
 
@@ -254,24 +284,19 @@ impl RustTokenizer {
                 _ if is_delimiter(c) => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::Number,
-                        match slf.token.parse::<i64>() {
-                            Ok(parsed_num) => {
+                    match AppropriateInt::from_str(&slf.token) {
+                        Ok(parsed_num) => {
+                            now_token = Some((
+                                TokenType::Number,
                                 Some(parsed_num.into_py(py))
-                            },
-                            Err(_) => {
-                                Some(
-                                    match BigInt::from_str(&slf.token) {
-                                        Ok(parsed_num) => parsed_num.into_py(py),
-                                        Err(e) => {
-                                            return Err(PyValueError::new_err(format!("Error parsing integer: {e:?}")));
-                                        }
-                                    }
-                                )
-                            }
+                            ));
                         },
-                    ));
+                        Err(e) => {
+                            return Err(PyValueError::new_err(format!(
+                                "Error parsing integer (this should never happen): {e:?}"
+                            )));
+                        }
+                    }
                     slf.advance = false;
                 }
                 _ => {
