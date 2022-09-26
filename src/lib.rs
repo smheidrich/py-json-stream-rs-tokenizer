@@ -151,6 +151,11 @@ impl RustTokenizer {
         if slf.completed {
             match now_token {
                 Some(now_token) => {
+                    // these are just to ensure in the next iteration we'll end
+                    // up in the slf.completed = false branch and quit:
+                    slf.completed = false;
+                    slf.state = State::Whitespace;
+                    // final token
                     return Ok(Some(now_token));
                 }
                 None => {
@@ -158,9 +163,7 @@ impl RustTokenizer {
                 }
             }
         } else {
-            return Err(PyValueError::new_err(format!(
-                "Unexpected end of stream"
-            )));
+            return Ok(None);
         }
     }
 }
