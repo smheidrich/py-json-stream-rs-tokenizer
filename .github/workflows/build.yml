@@ -25,47 +25,87 @@ jobs:
         name: wheels
         path: dist
 
-  windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: messense/maturin-action@v1
-      with:
-        command: build
-        args: --release -o dist --find-interpreter
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
+  #windows:
+    #runs-on: windows-latest
+    #steps:
+    #- uses: actions/checkout@v3
+    #- uses: messense/maturin-action@v1
+      #with:
+        #command: build
+        #args: --release -o dist --find-interpreter
+    #- name: Upload wheels
+      #uses: actions/upload-artifact@v2
+      #with:
+        #name: wheels
+        #path: dist
 
-  macos:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: messense/maturin-action@v1
-      with:
-        command: build
-        args: --release -o dist --universal2 --find-interpreter
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
+  #macos:
+    #runs-on: macos-latest
+    #steps:
+    #- uses: actions/checkout@v3
+    #- uses: messense/maturin-action@v1
+      #with:
+        #command: build
+        #args: --release -o dist --universal2 --find-interpreter
+    #- name: Upload wheels
+      #uses: actions/upload-artifact@v2
+      #with:
+        #name: wheels
+        #path: dist
 
-  release:
-    name: Release
+  #release:
+    #name: Release
+    #runs-on: ubuntu-latest
+    #if: "startsWith(github.ref, 'refs/tags/')"
+    #needs: [ macos, windows, linux ]
+    #steps:
+      #- uses: actions/download-artifact@v2
+        #with:
+          #name: wheels
+      #- name: Publish to PyPI
+        #uses: messense/maturin-action@v1
+        #env:
+          #MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+        #with:
+          #command: upload
+          #args: --skip-existing *
+
+  release-bin-or-dummy:
+    name: Release bin-or-dummy package
     runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [ macos, windows, linux ]
+    #if: "startsWith(github.ref, 'refs/tags/')"
+    #needs: [ macos, windows, linux ]
+    needs: [ linux ]
     steps:
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: wheels
-      - name: Publish to PyPI
+      - name: Dummify sdist
+        run: |
+          pip install toml
+          python ci/dummify-maturin-sdist.py *.tar.gz
+          shopt -s extglob
+          rm -f !(*dummy*).tar.gz
+      - name: Rename wheels
+        run: |
+          pip install wheel
+          shopt -s extglob
+          for x in !(*dummy*).whl; do
+            python ci/deep-rename-wheel.py "$x"
+            rm -f "$x"
+          done
+      - name: Move everything to be uploaded to separate folder
+        run: |
+          ls -l
+          mkdir for_upload
+          mv *.whl *.tar.gz for_upload
+          ls -l for_upload
+      - name: Publish to Test PyPI
         uses: messense/maturin-action@v1
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          MATURIN_PYPI_TOKEN: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          MATURIN_REPOSITORY_URL: https://test.pypi.org/legacy/
         with:
           command: upload
-          args: --skip-existing *
+          args: --skip-existing for_upload/*
