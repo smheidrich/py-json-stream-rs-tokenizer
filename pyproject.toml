@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "json-stream-rs-tokenizer"
-version = "0.3.1"
+version = "0.3.2"
 description = "A faster tokenizer for the json-stream Python library"
 readme = "README.md"
 license = { file = "LICENSE" }
