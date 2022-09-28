@@ -8,12 +8,14 @@ use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
+use std::num::ParseFloatError;
 use std::io::BufRead;
 use std::io::BufReader;
+use thiserror::Error;
 use utf8_chars::BufReadCharsExt;
 
 mod int;
-use crate::int::AppropriateInt;
+use crate::int::{AppropriateInt, ParseIntError};
 use std::str::FromStr;
 
 #[derive(Clone)]
@@ -77,6 +79,22 @@ impl IntoPy<PyObject> for TokenType {
     }
 }
 
+#[derive(Error, Debug)]
+pub enum ParsingError {
+    #[error("invalid JSON: {0}")]
+    InvalidJson(String),
+    #[error("error due to limitation: ")]
+    Limitation(String),
+    #[error("unknown error")]
+    Unknown,
+}
+
+impl From<ParseFloatError> for ParsingError {
+    fn from(e: ParseFloatError) -> ParsingError {
+        ParsingError::InvalidJson(format!("error parsing float: {e}"))
+    }
+}
+
 #[pymethods]
 impl RustTokenizer {
     #[new]
@@ -131,7 +149,7 @@ impl RustTokenizer {
                         Err(e) => {
                             let index = slf.index;
                             return Err(PyValueError::new_err(format!(
-                                "Error while parsing at index {index}: {e:?}"
+                                "Error while parsing at index {index}: {e}"
                             )));
                         }
                     }
@@ -147,7 +165,15 @@ impl RustTokenizer {
                 }
             }
         }
-        let now_token = RustTokenizer::process_char(slf.borrow_mut(), py, ' ')?;
+        match RustTokenizer::process_char(slf.borrow_mut(), py, ' ') {
+            Ok(tok) => { now_token = tok; },
+            Err(e) => {
+                let index = slf.index;
+                return Err(PyValueError::new_err(format!(
+                    "Error while parsing at index {index}: {e}"
+                )));
+            }
+        }
         if slf.completed {
             match now_token {
                 Some(now_token) => {
@@ -173,7 +199,7 @@ impl RustTokenizer {
         slf: &mut Self,
         py: Python<'_>,
         c: char,
-    ) -> Result<Option<(TokenType, Option<PyObject>)>, PyErr> {
+    ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
         slf.advance = true;
         slf.next_state = slf.state.clone();
         let mut now_token = None;
@@ -238,7 +264,7 @@ impl RustTokenizer {
                 }
                 _ => {
                     if !c.is_whitespace() {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid JSON character: {c:?}"
                         )));
                     }
@@ -265,18 +291,23 @@ impl RustTokenizer {
                                 TokenType::Number,
                                 Some(parsed_num.into_py(py))
                             ));
-                        },
-                        Err(e) => {
-                            return Err(PyValueError::new_err(format!(
-                                "Error parsing integer (this should never happen): {e:?}"
+                        }
+                        Err(ParseIntError::General(e)) => {
+                            return Err(ParsingError::InvalidJson(format!(
+                                "Could not parse integer: {e}"
+                            )));
+                        }
+                        Err(ParseIntError::TooLargeOrSmall) => {
+                            return Err(ParsingError::Limitation(format!(
+                                "Incapable of parsing integer due to platform constraint"
                             )));
                         }
                     }
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "A number must contain only digits.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "A number must contain only digits.  Got {c:?}"
                     )));
                 }
             },
@@ -296,8 +327,8 @@ impl RustTokenizer {
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "A 0 must be followed by a '.' | a 'e'.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "A 0 must be followed by a '.' | a 'e'.  Got {c:?}"
                     )));
                 }
             },
@@ -311,8 +342,8 @@ impl RustTokenizer {
                     add_char = true;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "A - must be followed by a digit.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "A - must be followed by a digit.  Got {c:?}"
                     )));
                 }
             },
@@ -322,8 +353,8 @@ impl RustTokenizer {
                     add_char = true;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "An e in a number must be followed by a '+', '-' | digit.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "An e in a number must be followed by a '+', '-' | digit.  Got {c:?}"
                     )));
                 }
             },
@@ -341,8 +372,8 @@ impl RustTokenizer {
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "A number exponent must consist only of digits.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "A number exponent must consist only of digits.  Got {c:?}"
                     )));
                 }
             },
@@ -364,7 +395,7 @@ impl RustTokenizer {
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
+                    return Err(ParsingError::InvalidJson(format!(
                         "A number must include only digits"
                     )));
                 }
@@ -375,7 +406,7 @@ impl RustTokenizer {
                     add_char = true;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
+                    return Err(ParsingError::InvalidJson(format!(
                         "A number with a decimal point must be followed by a fractional part"
                     )));
                 }
@@ -385,8 +416,8 @@ impl RustTokenizer {
                     slf.next_state = State::False2;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -395,8 +426,8 @@ impl RustTokenizer {
                     slf.next_state = State::False3;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -405,8 +436,8 @@ impl RustTokenizer {
                     slf.next_state = State::False4;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -418,8 +449,8 @@ impl RustTokenizer {
                         Some((TokenType::Boolean, Some(false.into_py(py))));
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -428,8 +459,8 @@ impl RustTokenizer {
                     slf.next_state = State::True2;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -438,8 +469,8 @@ impl RustTokenizer {
                     slf.next_state = State::True3;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -451,8 +482,8 @@ impl RustTokenizer {
                         Some((TokenType::Boolean, Some(true.into_py(py))));
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -461,8 +492,8 @@ impl RustTokenizer {
                     slf.next_state = State::Null2;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -471,8 +502,8 @@ impl RustTokenizer {
                     slf.next_state = State::Null3;
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -483,8 +514,8 @@ impl RustTokenizer {
                     now_token = Some((TokenType::Null, None));
                 }
                 _ => {
-                    return Err(PyValueError::new_err(format!(
-                        "Invalid JSON character: '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
                     )));
                 }
             },
@@ -509,8 +540,8 @@ impl RustTokenizer {
                     slf.advance = false;
                     slf.next_state = State::Whitespace;
                 } else {
-                    return Err(PyValueError::new_err(format!(
-                        "Expected whitespace | an operator after strin.  Got '{c:?}'"
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Expected whitespace | an operator after strin.  Got {c:?}"
                     )));
                 }
             }
@@ -549,7 +580,7 @@ impl RustTokenizer {
                         slf.charcode = 0;
                     }
                     _ => {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid string escape: {c:?}"
                         )));
                     }
@@ -567,7 +598,7 @@ impl RustTokenizer {
                         slf.charcode = (c as u32 - 55) * 4096;
                     }
                     _ => {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid character code: {c:?}"
                         )));
                     }
@@ -586,7 +617,7 @@ impl RustTokenizer {
                         slf.charcode += (c as u32 - 55) * 256;
                     }
                     _ => {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid character code: {c:?}"
                         )));
                     }
@@ -605,7 +636,7 @@ impl RustTokenizer {
                         slf.charcode += (c as u32 - 55) * 16;
                     }
                     _ => {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid character code: {c:?}"
                         )));
                     }
@@ -624,7 +655,7 @@ impl RustTokenizer {
                         slf.charcode += c as u32 - 55;
                     }
                     _ => {
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "Invalid character code: {c:?}"
                         )));
                     }
@@ -636,7 +667,7 @@ impl RustTokenizer {
                     }
                     None => {
                         let charcode = slf.charcode;
-                        return Err(PyValueError::new_err(format!(
+                        return Err(ParsingError::InvalidJson(format!(
                             "No unicode character for code: {charcode}"
                         )));
                     }

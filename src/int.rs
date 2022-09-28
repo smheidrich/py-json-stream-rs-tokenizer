@@ -3,10 +3,15 @@
 /// This feature is not available for PyPy or when Py_LIMITED_API is set.
 use pyo3::prelude::*;
 use std::str::FromStr;
+use thiserror::Error;
 
-#[derive(Debug, Clone)]
-pub struct ParseIntError {
-    pub message: String
+#[derive(Error, Debug)]
+pub enum ParseIntError {
+    #[error("general integer parsing error: {0}")]
+    General(String),
+    #[error("integer too large or small")]
+    #[allow(dead_code)]
+    TooLargeOrSmall,
 }
 
 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
@@ -36,15 +41,15 @@ impl FromStr for AppropriateInt {
                 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
                 match BigInt::from_str(s) {
                     Ok(parsed_num) => Ok(AppropriateInt::Big(parsed_num)),
-                    Err(e) => Err(ParseIntError{message: format!("{e:?}")}),
+                    Err(e) => Err(ParseIntError::General(format!("{e:?}"))),
                 }
                 #[cfg(any(Py_LIMITED_API, PyPy))]
                 {
-                    Err(ParseIntError{message: format!("{e:?}")})
+                    Err(ParseIntError::TooLargeOrSmall)
                 }
             }
             Err(e) => {
-                Err(ParseIntError{message: format!("{e:?}")})
+                Err(ParseIntError::General(format!("{e:?}")))
             }
         }
     }
