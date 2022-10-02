@@ -5,67 +5,56 @@ on:
     branches:
       - main
     tags:
-      - 'v[0-9]*'
-
+      - "[0-9].*"
   pull_request:
 
 jobs:
-  linux:
-    runs-on: ubuntu-latest
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        #os: [ubuntu-20.04, windows-2019, macos-11]
+        os: [ubuntu-20.04]
     steps:
-    - uses: actions/checkout@v3
-    - uses: messense/maturin-action@v1
-      with:
-        manylinux: auto
-        command: build
-        args: --release --sdist -o dist --find-interpreter
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
-
-  windows:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: messense/maturin-action@v1
-      with:
-        command: build
-        args: --release -o dist --find-interpreter
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
-
-  macos:
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v3
-    - uses: messense/maturin-action@v1
-      with:
-        command: build
-        args: --release -o dist --universal2 --find-interpreter
-    - name: Upload wheels
-      uses: actions/upload-artifact@v2
-      with:
-        name: wheels
-        path: dist
-
-  release:
-    name: Release
-    runs-on: ubuntu-latest
-    if: "startsWith(github.ref, 'refs/tags/')"
-    needs: [ macos, windows, linux ]
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: wheels
-      - name: Publish to PyPI
-        uses: messense/maturin-action@v1
+      - uses: actions/checkout@v3
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v2.10.2
         env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
+          CIBW_SKIP: >
+            *musllinux*
+          CIBW_BEFORE_ALL: >
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+            sh -s -- -y
+          CIBW_ENVIRONMENT: >
+            PATH="$HOME/.cargo/bin:$PATH"
+      - uses: actions/upload-artifact@v3
         with:
-          command: upload
-          args: --skip-existing *
+          path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build sdist
+        run: pipx run build --sdist
+      - uses: actions/upload-artifact@v3
+        with:
+          path: dist/*.tar.gz
+
+  upload_pypi:
+    needs: [build_wheels, build_sdist]
+    runs-on: ubuntu-latest
+    #if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@v1.5.0
+        with:
+          #password: ${{ secrets.PYPI_API_TOKEN }}
+          # testing:
+          repository_url: https://test.pypi.org/legacy/
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
