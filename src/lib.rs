@@ -81,11 +81,11 @@ impl IntoPy<PyObject> for TokenType {
 
 #[derive(Error, Debug)]
 pub enum ParsingError {
-    #[error("invalid JSON: {0}")]
+    #[error("{0}")]
     InvalidJson(String),
-    #[error("error due to limitation: {0}")]
+    #[error("Error due to limitation: {0}")]
     Limitation(String),
-    #[error("unknown error")]
+    #[error("Unknown error")]
     Unknown,
 }
 
@@ -149,7 +149,7 @@ impl RustTokenizer {
                         Err(e) => {
                             let index = slf.index;
                             return Err(PyValueError::new_err(format!(
-                                "Error while parsing at index {index}: {e}"
+                                "{e} at index {index}"
                             )));
                         }
                     }
@@ -170,7 +170,7 @@ impl RustTokenizer {
             Err(e) => {
                 let index = slf.index;
                 return Err(PyValueError::new_err(format!(
-                    "Error while parsing at index {index}: {e}"
+                    "{e} at index {index}"
                 )));
             }
         }
