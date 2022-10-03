@@ -83,7 +83,7 @@ impl IntoPy<PyObject> for TokenType {
 pub enum ParsingError {
     #[error("invalid JSON: {0}")]
     InvalidJson(String),
-    #[error("error due to limitation: ")]
+    #[error("error due to limitation: {0}")]
     Limitation(String),
     #[error("unknown error")]
     Unknown,
