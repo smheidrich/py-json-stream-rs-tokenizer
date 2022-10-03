@@ -56,7 +56,7 @@ for k, l in d.items():
 
 As a perhaps slightly more convenient alternative, the package also provides
 wrappers around json_stream's `load` and `visit` functions which do this for
-you:
+you, provided that `json-stream` has been installed:
 
 ```python
 from json_stream_rs_tokenizer import load

@@ -1,6 +1,7 @@
 from pathlib import Path
 from setuptools import setup
 from setuptools_rust import Binding, RustExtension
+
 this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
@@ -28,7 +29,7 @@ setup(
         )
     },
     python_requires=">=3.7,<4",
-    install_requires=["json-stream>=1.4,<2"],
+    install_requires=[],
     extras_require={
         "benchmark": [
             "tqdm>=4.64,<5",
