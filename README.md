@@ -22,6 +22,14 @@ nature of the data.
 pip install json-stream-rs-tokenizer
 ```
 
+This will install a prebuilt wheel if one is available for your platform and
+otherwise try to build it from the source distribution which requires a Rust
+toolchain to be installed and available to succeed. Note that if the build
+fails, the package installation will be considered as successfully completed
+anyway, but `RustTokenizer` (see below) won't be available for import. This is
+so that packages can depend on the library but fall back to their own
+implementation if neither a prebuild wheel is available nor the build succeeds.
+
 **Note** that in editable/develop installs, it will sometimes (?) compile the
 Rust library in debug mode, which makes it run *slower* than the pure-Python
 tokenizer. When in doubt, run installation commands with `--verbose` to see the
@@ -48,7 +56,7 @@ for k, l in d.items():
 
 As a perhaps slightly more convenient alternative, the package also provides
 wrappers around json_stream's `load` and `visit` functions which do this for
-you:
+you, provided that `json-stream` has been installed:
 
 ```python
 from json_stream_rs_tokenizer import load

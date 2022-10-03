@@ -1,4 +1,26 @@
-from .json_stream_rs_tokenizer import RustTokenizer
+__all__ = ["load", "visit"]
+
+try:
+    from .json_stream_rs_tokenizer import RustTokenizer
+
+    __all__.append("RustTokenizer")
+except ImportError:
+    pass
+
+
+class ExtensionUnavailable(Exception):
+    pass
+
+
+def rust_tokenizer_or_raise():
+    try:
+        return RustTokenizer
+    except NameError as e:
+        raise ExtensionUnavailable(
+            "Rust tokenizer unavailable, most likely because no prebuilt "
+            "wheel was available for your platform and building from source "
+            "failed."
+        ) from e
 
 
 def load(fp, persistent=False):
@@ -7,7 +29,7 @@ def load(fp, persistent=False):
     """
     import json_stream
 
-    return json_stream.load(fp, persistent, tokenizer=RustTokenizer)
+    return json_stream.load(fp, persistent, tokenizer=rust_tokenizer_or_raise())
 
 
 def visit(fp, visitor):
@@ -16,6 +38,4 @@ def visit(fp, visitor):
     """
     import json_stream
 
-    return json_stream.visit(fp, visitor, tokenizer=RustTokenizer)
-
-__all__ = ["RustTokenizer", "load", "visit"]
+    return json_stream.visit(fp, visitor, tokenizer=rust_tokenizer_or_raise())
