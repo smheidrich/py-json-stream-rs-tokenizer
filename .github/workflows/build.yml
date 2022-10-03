@@ -22,7 +22,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux*
+            *musllinux* pp*
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
