@@ -29,6 +29,8 @@ fails, the package installation will be considered as successfully completed
 anyway, but `RustTokenizer` (see below) won't be available for import. This is
 so that packages can depend on the library but fall back to their own
 implementation if neither a prebuild wheel is available nor the build succeeds.
+Increase the installation command's verbosity with `-v` (repeated for even more
+information, e.g. `-vv`) to see error messages when the build fails.
 
 **Note** that in editable/develop installs, it will sometimes (?) compile the
 Rust library in debug mode, which makes it run *slower* than the pure-Python
