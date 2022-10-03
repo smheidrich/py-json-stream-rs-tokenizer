@@ -77,6 +77,8 @@ d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
   However, [PyO3 PR #2626](https://github.com/PyO3/pyo3/pull/2626), which lifts
   the restriction for PyPy, has been merged into PyO3 main and is expected to
   make it into a release sooner or later.
+  To find out whether a given installation supports arbitrary-size integers,
+  the `json_stream_rs_tokenizer.supports_bigint()` can be called.
 
 ## Benchmarks
 
