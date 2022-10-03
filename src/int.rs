@@ -68,3 +68,11 @@ impl IntoPy<PyObject> for AppropriateInt {
         }
     }
 }
+
+pub fn supports_bigint() -> bool {
+    #[cfg(any(Py_LIMITED_API, PyPy))]
+    {
+        return false;
+    }
+    return true;
+}

@@ -684,8 +684,19 @@ impl RustTokenizer {
     }
 }
 
+/// supports_bigint()
+/// --
+///
+/// Returns whether the current installation supports arbitrary-size integers.
+#[pyfunction]
+fn supports_bigint() -> PyResult<bool> {
+    Ok(int::supports_bigint())
+}
+
 #[pymodule]
 fn json_stream_rs_tokenizer(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
     m.add_class::<RustTokenizer>()?;
+    m.add_wrapped(wrap_pyfunction!(supports_bigint))?;
+
     Ok(())
 }

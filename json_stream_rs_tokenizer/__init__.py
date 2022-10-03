@@ -7,6 +7,13 @@ try:
 except ImportError:
     pass
 
+try:
+    from .json_stream_rs_tokenizer import supports_bigint
+
+    __all__.append("supports_bigint")
+except ImportError:
+    pass
+
 
 class ExtensionUnavailable(Exception):
     pass
