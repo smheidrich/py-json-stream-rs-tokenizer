@@ -1,4 +1,4 @@
-__all__ = ["load", "visit"]
+__all__ = ["load", "visit", "rust_tokenizer_or_raise", "ExtensionUnavailable"]
 
 try:
     from .json_stream_rs_tokenizer import RustTokenizer
