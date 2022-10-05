@@ -1,4 +1,11 @@
-__all__ = ["load", "visit", "rust_tokenizer_or_raise", "ExtensionUnavailable"]
+__all__ = [
+    "load",
+    "visit",
+    "rust_tokenizer_or_raise",
+    "ExtensionException",
+    "ExtensionUnavailable",
+    "RequestedFeatureUnavailable",
+]
 
 try:
     from .json_stream_rs_tokenizer import RustTokenizer
@@ -15,19 +22,34 @@ except ImportError:
     pass
 
 
-class ExtensionUnavailable(Exception):
+class ExtensionException(Exception):
     pass
 
 
-def rust_tokenizer_or_raise():
+class ExtensionUnavailable(ExtensionException):
+    pass
+
+
+class RequestedFeatureUnavailable(ExtensionException):
+    pass
+
+
+def rust_tokenizer_or_raise(requires_bigint=True):
     try:
-        return RustTokenizer
+        tokenizer = RustTokenizer
+        if requires_bigint and not supports_bigint():
+            raise RequestedFeatureUnavailable(
+                "Rust tokenizer lacks requested support for arbitrary-size "
+                "integers on your platform, most likely because you're using "
+                "PyPy or the extension was built with Py_LIMITED_API."
+            )
     except NameError as e:
         raise ExtensionUnavailable(
             "Rust tokenizer unavailable, most likely because no prebuilt "
             "wheel was available for your platform and building from source "
             "failed."
         ) from e
+    return tokenizer
 
 
 def load(fp, persistent=False):
