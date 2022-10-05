@@ -27,6 +27,7 @@ jobs:
             sh -s -- -y
           CIBW_ENVIRONMENT: >
             PATH="$HOME/.cargo/bin:$PATH"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
