@@ -14,6 +14,7 @@ setup(
             binding=Binding.PyO3,
             optional=True,
             py_limited_api=False,  # required for num_bigint compat.
+            debug=False,  # pointless even in develop mode
         )
     ],
     packages=["json_stream_rs_tokenizer"],
