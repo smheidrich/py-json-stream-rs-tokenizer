@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="json-stream-rs-tokenizer",
-    version="0.4.8",
+    version="0.4.9",
     rust_extensions=[
         RustExtension(
             "json_stream_rs_tokenizer.json_stream_rs_tokenizer",
@@ -17,7 +17,7 @@ setup(
             debug=False,  # pointless even in develop mode
         )
     ],
-    packages=["json_stream_rs_tokenizer"],
+    packages=["json_stream_rs_tokenizer", "json_stream_rs_tokenizer.benchmark"],
     zip_safe=False,
     description="A faster tokenizer for the json-stream Python library",
     readme="README.md",
