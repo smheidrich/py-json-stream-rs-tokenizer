@@ -11,7 +11,7 @@ pub enum ParseIntError {
     General(String),
     #[error("integer too large or small")]
     #[allow(dead_code)]
-    TooLargeOrSmall,
+    TooLargeOrSmall, // deprecated
 }
 
 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
@@ -26,6 +26,7 @@ pub enum AppropriateInt {
 #[cfg(all(any(Py_LIMITED_API, PyPy)))]
 pub enum AppropriateInt {
     Normal(i64),
+    Big(String), // to be converted into int on the Python side
 }
 
 impl FromStr for AppropriateInt {
@@ -44,9 +45,7 @@ impl FromStr for AppropriateInt {
                     Err(e) => Err(ParseIntError::General(format!("{e:?}"))),
                 }
                 #[cfg(any(Py_LIMITED_API, PyPy))]
-                {
-                    Err(ParseIntError::TooLargeOrSmall)
-                }
+                Ok(AppropriateInt::Big(s.to_owned()))
             }
             Err(e) => {
                 Err(ParseIntError::General(format!("{e:?}")))
@@ -57,14 +56,9 @@ impl FromStr for AppropriateInt {
 
 impl IntoPy<PyObject> for AppropriateInt {
     fn into_py(self, py: Python<'_>) -> PyObject {
-        #[cfg(not(any(Py_LIMITED_API, PyPy)))]
         match self {
             AppropriateInt::Normal(num) => { num.into_py(py) },
             AppropriateInt::Big(num) => { num.into_py(py) },
-        }
-        #[cfg(any(Py_LIMITED_API, PyPy))]
-        match self {
-            AppropriateInt::Normal(num) => { num.into_py(py) },
         }
     }
 }
@@ -74,5 +68,8 @@ pub fn supports_bigint() -> bool {
     {
         return false;
     }
-    return true;
+    #[cfg(not(any(Py_LIMITED_API, PyPy)))]
+    {
+        return true;
+    }
 }

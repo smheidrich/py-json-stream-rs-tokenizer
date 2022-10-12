@@ -7,13 +7,14 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="json-stream-rs-tokenizer",
-    version="0.4.7",
+    version="0.4.8",
     rust_extensions=[
         RustExtension(
             "json_stream_rs_tokenizer.json_stream_rs_tokenizer",
             binding=Binding.PyO3,
             optional=True,
             py_limited_api=False,  # required for num_bigint compat.
+            debug=False,  # pointless even in develop mode
         )
     ],
     packages=["json_stream_rs_tokenizer"],
