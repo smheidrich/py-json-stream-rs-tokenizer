@@ -70,15 +70,14 @@ d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
 
 ## Limitations
 
-- Arbitrary-size integers are not currently supported for PyPy nor when the
-  extension is built against Python's limited C API (`Py_LIMITED_API`). This is
-  due to a limitation of PyO3's
-  [`num-bigint` extension](https://pyo3.rs/main/doc/pyo3/num_bigint/).
-  However, [PyO3 PR #2626](https://github.com/PyO3/pyo3/pull/2626), which lifts
-  the restriction for PyPy, has been merged into PyO3 main and is expected to
-  make it into a release sooner or later.
-  To find out whether a given installation supports arbitrary-size integers,
-  the `json_stream_rs_tokenizer.supports_bigint()` can be called.
+- For PyPy, the speedup is only 1.0-1.5x (much lower than that for CPython).
+  This has yet to be
+  [investigated](https://github.com/smheidrich/py-json-stream-rs-tokenizer/issues/33).
+- In builds that don't support PyO3's
+  [`num-bigint` extension](https://pyo3.rs/main/doc/pyo3/num_bigint/)
+  (currently only PyPy builds and manual ones against Python's limited C API
+  (`Py_LIMITED_API`)), conversion of large integers is performed in Python
+  rather than in Rust, at a very small runtime cost.
 
 ## Benchmarks
 
