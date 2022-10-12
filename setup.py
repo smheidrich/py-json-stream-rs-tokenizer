@@ -17,7 +17,7 @@ setup(
             debug=False,  # pointless even in develop mode
         )
     ],
-    packages=["json_stream_rs_tokenizer"],
+    packages=["json_stream_rs_tokenizer", "json_stream_rs_tokenizer.benchmark"],
     zip_safe=False,
     description="A faster tokenizer for the json-stream Python library",
     readme="README.md",
