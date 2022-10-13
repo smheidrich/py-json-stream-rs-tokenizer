@@ -1,14 +1,22 @@
 import json
-from pathlib import Path
 import random
+from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from contexttimer import Timer
 import json_stream as js
-import json_stream_rs_tokenizer as jsrs
+from contexttimer import Timer
 from tqdm import tqdm
 
+import json_stream_rs_tokenizer as jsrs
+
 from .random_json_generator import RandomJsonGenerator
+
+try:
+    js.to_standard_types
+except AttributeError as e:
+    raise ImportError(
+        "benchmarks currently require a patched version of json-stream"
+    ) from e
 
 
 def shuffled(l):
@@ -16,14 +24,6 @@ def shuffled(l):
 
 
 def main(json_bytes=2e6):
-    try:
-        js.to_standard_types
-    except NameError:
-        print(
-            "benchmarks currently require a patched version of json-stream "
-            "available at https://github.com/daggaz/json-stream/pull/17"
-        )
-        exit(1)
     with TemporaryDirectory() as tmp_dir:
         random_json_file_path = Path(tmp_dir) / "random.json"
         print("generating random json...")
