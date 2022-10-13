@@ -1,3 +1,7 @@
+> **NOTE:** `json-stream-rs-tokenizer` is now automatically used by
+> `json-stream`, so unless you find a bug, you can ignore this package's
+> existence!
+
 # json-stream-rs-tokenizer
 
 [![CI build badge](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/build.yml/badge.svg)](https://github.com/smheidrich/py-json-stream-rs-tokenizer/actions/workflows/build.yml)
@@ -18,29 +22,56 @@ nature of the data.
 
 ## Installation
 
+### Implicit
+
+Starting at its 2.0 release, **`json-stream` depends on and uses
+`json-stream-rs-tokenizer` by default**, so you don't need to install it
+explicitly anymore.
+
+### Explicit
+
+If you use an older `json-stream` version (which you have no reason to do) or
+need to install `json-stream-rs-tokenizer` explicitly for another reason, you
+can do:
+
 ```bash
 pip install json-stream-rs-tokenizer
 ```
 
-This will install a prebuilt wheel if one is available for your platform and
-otherwise try to build it from the source distribution which requires a Rust
-toolchain to be installed and available to succeed. Note that if the build
-fails, the package installation will be considered as successfully completed
-anyway, but `RustTokenizer` (see below) won't be available for import. This is
-so that packages can depend on the library but fall back to their own
-implementation if neither a prebuild wheel is available nor the build succeeds.
-Increase the installation command's verbosity with `-v` (repeated for even more
-information, e.g. `-vv`) to see error messages when the build fails.
+The library will be installed as a prebuilt wheel if one is available for your
+platform. Otherwise, pip will try to build it from the source distribution,
+which requires a Rust toolchain to be installed and available to succeed.
 
-**Note** that in editable/develop installs, it will sometimes (?) compile the
-Rust library in debug mode, which makes it run *slower* than the pure-Python
-tokenizer. When in doubt, run installation commands with `--verbose` to see the
-Rust compilation commands and verify that they used `--release`.
+Note that if the build from source fails, the package installation will be
+considered successfully completed anyway, but `RustTokenizer` (see below) won't
+be available for import. This is so that packages (specifically, `json-stream`)
+can depend on the library but fall back to their own implementation if neither
+a prebuilt wheel is available nor the build succeeds.
+
+You can increase the installation command's verbosity with `-v` (repeated for
+even more information, e.g. `-vv`) to see error messages when the build from
+source fails.
+
+**Note** that if the Rust library is compiled in debug mode, it will run
+*slower* than the pure-Python tokenizer. The setuptools configuration should
+make sure this doesn't happen even when installing in development mode, but
+when in doubt, run installation commands with `-v` to see the Rust compilation
+commands and verify that they used `--release`.
 
 ## Usage
 
-To use this package's `RustTokenizer`, simply pass it as the `tokenizer`
-argument to `json-stream`'s `load` or `visit`:
+### Implicit
+
+As described above, `json-stream-rs-tokenizer` is now used by `json-stream` by
+default, so you don't have to do anything special to use it. `json-stream` will
+fall back to its pure-Python tokenizer when `json-stream-rs-tokenizer` was not
+successfully installed, however.
+
+### Explicit
+
+For older versions of `json-stream`, or if you want to *ensure* the Rust
+tokenizer is used no matter what, simply pass this package's `RustTokenizer` as
+the `tokenizer` argument to `json-stream`'s `load` or `visit`:
 
 ```python
 from io import StringIO
@@ -56,17 +87,9 @@ for k, l in d.items():
   print(f"{k}: {' '.join(str(n) for n in l)}")
 ```
 
-As a perhaps slightly more convenient alternative, the package also provides
-wrappers around json_stream's `load` and `visit` functions which do this for
-you, provided that `json-stream` has been installed:
-
-```python
-from json_stream_rs_tokenizer import load
-
-d = load(StringIO('{ "a": [1,2,3,4], "b": [5,6,7] }'))
-
-# ...
-```
+Note that the import of `RustTokenizer` will fail if the Rust extension is not
+available (i.e., when no prebuilt wheels were available and the installation
+from the source distribution failed).
 
 ## Limitations
 
@@ -87,9 +110,9 @@ dependencies and a version of `json-stream` with
 [this patch](https://github.com/daggaz/json-stream/pull/17) applied:
 
 ```bash
-pip install json_stream_rs_tokenizer[benchmark]
+pip install 'json_stream_rs_tokenizer[benchmark]'
 pip install --ignore-installed \
-  git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types
+  'git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types'
 ```
 
 You can then run the benchmark as follows:
