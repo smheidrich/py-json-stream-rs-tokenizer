@@ -110,7 +110,7 @@ dependencies and a version of `json-stream` with
 [this patch](https://github.com/daggaz/json-stream/pull/17) applied:
 
 ```bash
-pip install 'json_stream_rs_tokenizer[benchmark]'
+pip install 'json-stream-rs-tokenizer[benchmark]'
 pip install --ignore-installed \
   'git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types'
 ```
@@ -122,6 +122,11 @@ python -m json_stream_rs_tokenizer.benchmark
 ```
 
 Run it with `--help` to see more information.
+
+## Tests
+
+As the tests make use of the benchmark feature, they require the same
+dependencies as above in addition to the optional `test` dependencies.
 
 ## License
 
