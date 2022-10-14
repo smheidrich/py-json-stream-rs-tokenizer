@@ -12,7 +12,7 @@ setup(
         RustExtension(
             "json_stream_rs_tokenizer.json_stream_rs_tokenizer",
             binding=Binding.PyO3,
-            optional=True,
+            optional=False,  # is set to True prior to publishing as sdist
             py_limited_api=False,  # required for num_bigint compat.
             debug=False,  # pointless even in develop mode
         )

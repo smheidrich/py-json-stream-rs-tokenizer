@@ -43,6 +43,10 @@ jobs:
       - uses: actions/checkout@v3
       - name: Build sdist
         run: pipx run build --sdist
+      - name: Install tool to post-process sdist to make extension optional
+        run: pip install 'postprocess-sdist-make-rust-ext-opt>=0.2,<0.3'
+      - name: Post-process sdist to make extension optional
+        run: postprocess-sdist-make-rust-ext-opt -fO dist dist/*.tar.gz
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
