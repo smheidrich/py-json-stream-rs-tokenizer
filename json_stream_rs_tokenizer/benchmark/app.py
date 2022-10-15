@@ -1,10 +1,12 @@
 import json
 import random
+from functools import partial
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 import json_stream as js
 from contexttimer import Timer
+from json_stream.tokenizer import tokenize as pure_python_tokenizer
 from json_stream_to_standard_types import to_standard_types
 from tqdm import tqdm
 
@@ -33,8 +35,8 @@ def main(json_bytes=2e6):
         results = {"python": {}, "rust": {}, "non-streaming": {}}
         for tokenizer_type, load_fn in shuffled(
             [
-                ("python", js.load),
-                ("rust", jsrs.load),
+                ("python", partial(js.load, tokenizer=pure_python_tokenizer)),
+                ("rust", partial(js.load, tokenizer=jsrs.RustTokenizer)),
                 ("non-streaming", json.load),
             ]
         ):
