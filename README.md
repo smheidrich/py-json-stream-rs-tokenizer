@@ -106,13 +106,10 @@ from the source distribution failed).
 
 The package comes with a script for rudimentary benchmarks on randomly
 generated JSON data. To run it, you'll need to install the optional `benchmark`
-dependencies and a version of `json-stream` with
-[this patch](https://github.com/daggaz/json-stream/pull/17) applied:
+dependencies:
 
 ```bash
 pip install 'json-stream-rs-tokenizer[benchmark]'
-pip install --ignore-installed \
-  'git+https://github.com/smheidrich/json-stream.git@util-to-convert-to-py-std-types'
 ```
 
 You can then run the benchmark as follows:
@@ -125,8 +122,18 @@ Run it with `--help` to see more information.
 
 ## Tests
 
-As the tests make use of the benchmark feature, they require the same
-dependencies as above in addition to the optional `test` dependencies.
+To run the tests, you'll need to install the optional `test` dependencies:
+
+```bash
+pip install 'json-stream-rs-tokenizer[test]'
+```
+
+As the test dependencies depend on the benchmark dependencies but the feature
+enabling such
+["recursive optional dependencies"](https://hynek.me/articles/python-recursive-optional-dependencies/)
+was only introduced in Pip 21.3, you'll need a version of Pip at least as
+recent as that. For older versions, just install the test dependencies
+manually.
 
 ## License
 

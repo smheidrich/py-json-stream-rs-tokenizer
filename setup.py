@@ -33,12 +33,16 @@ setup(
     install_requires=[],
     extras_require={
         "benchmark": [
+            "json-stream-to-standard-types>=0.1,<0.2",
             "tqdm>=4.64,<5",
             "contexttimer>=0.3,<0.4",
             "si-prefix>=1.2<2",
             "typer>=0.6,<0.7",
         ],
-        "test": ["pytest>7.1,<8"],
+        "test": [
+            "pytest>7.1,<8",
+            "json-stream-rs-tokenizer[benchmark]",
+        ],
     },
     classifiers=[
         "Programming Language :: Rust",
