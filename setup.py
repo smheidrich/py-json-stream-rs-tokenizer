@@ -7,7 +7,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="json-stream-rs-tokenizer",
-    version="0.4.10",
+    version="0.4.11",
     rust_extensions=[
         RustExtension(
             "json_stream_rs_tokenizer.json_stream_rs_tokenizer",
