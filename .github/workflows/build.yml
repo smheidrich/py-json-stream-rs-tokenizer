@@ -8,6 +8,12 @@ on:
       - 'v[0-9]*'
   pull_request:
 
+concurrency:
+  group: >
+    ${{ github.workflow }} @
+    ${{ github.event.pull_request.head.label || github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
