@@ -23,39 +23,44 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
-      - name: Cargo registry cache  # TODO probably ineffective for now
+      - name: Cargo registry cache
         uses: actions/cache@v2
         env:
           cache-name: cargo-registry
         with:
-          path: ~/.cargo/registry
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
-          restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-
-      - name: Rust build cache
-        uses: actions/cache@v2
-        env:
-          cache-name: rust-build
-        with:
-          path: target
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
-          restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.10.2
-        env:
-          CIBW_SKIP: >
-            *musllinux*
-          CIBW_BEFORE_ALL: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y
-          CIBW_BEFORE_ALL_MACOS: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y;
-            rustup target add aarch64-apple-darwin
-          CIBW_ENVIRONMENT: >
-            PATH="$HOME/.cargo/bin:$PATH"
-          CIBW_ARCHS_MACOS: "x86_64 arm64"
+            path: .cargo/registry
+            key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+            restore-keys: |
+              ${{ env.cache-name }}-${{ runner.os }}-
+        - name: Rust build cache
+          uses: actions/cache@v2
+          env:
+            cache-name: rust-build
+          with:
+            path: target
+            key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+            restore-keys: |
+              ${{ env.cache-name }}-${{ runner.os }}-
+        - name: Build wheels
+          uses: pypa/cibuildwheel@v2.10.2
+          env:
+            CIBW_SKIP: >
+              *musllinux*
+            CIBW_ENVIRONMENT: >
+              CARGO_HOME="$PWD/.cargo"
+              PATH="$CARGO_HOME/.cargo/bin:$PATH"
+            CIBW_ENVIRONMENT:
+            CIBW_ENVIRONMENT_LINUX:
+              CARGO_HOME="/project/.cargo"
+              PATH="$CARGO_HOME/.cargo/bin:$PATH"
+            CIBW_BEFORE_ALL: >
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+                sh -s -- -y
+            CIBW_BEFORE_ALL_MACOS: >
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
+                sh -s -- -y;
+              rustup target add aarch64-apple-darwin
+            CIBW_ARCHS_MACOS: "x86_64 arm64"
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
