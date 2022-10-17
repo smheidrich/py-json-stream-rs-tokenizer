@@ -48,10 +48,10 @@ jobs:
             *musllinux*
           CIBW_ENVIRONMENT: >
             CARGO_HOME="$PWD/.cargo"
-            PATH="$CARGO_HOME/.cargo/bin:$PATH"
+            PATH="$PWD/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX:
             CARGO_HOME="/project/.cargo"
-            PATH="$CARGO_HOME/.cargo/bin:$PATH"
+            PATH="/project/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
