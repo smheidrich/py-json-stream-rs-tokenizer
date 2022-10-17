@@ -54,10 +54,10 @@ jobs:
             PATH="$CARGO_HOME/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-              sh -s -- -y
+            sh -s -- -y
           CIBW_BEFORE_ALL_MACOS: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-              sh -s -- -y;
+            sh -s -- -y;
             rustup target add aarch64-apple-darwin
           CIBW_ARCHS_MACOS: "x86_64 arm64"
       - uses: actions/upload-artifact@v3
