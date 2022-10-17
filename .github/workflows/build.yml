@@ -49,7 +49,6 @@ jobs:
           CIBW_ENVIRONMENT: >
             CARGO_HOME="$PWD/.cargo"
             PATH="$CARGO_HOME/.cargo/bin:$PATH"
-          CIBW_ENVIRONMENT:
           CIBW_ENVIRONMENT_LINUX:
             CARGO_HOME="/project/.cargo"
             PATH="$CARGO_HOME/.cargo/bin:$PATH"
