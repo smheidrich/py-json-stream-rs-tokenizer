@@ -23,6 +23,24 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
+      - name: Cargo registry cache  # TODO probably ineffective for now
+        uses: actions/cache@v2
+        env:
+          cache-name: cargo-registry
+        with:
+          path: ~/.cargo/registry
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          restore-keys: |
+            ${{ env.cache-name }}-${{ runner.os }}-
+      - name: Rust build cache
+        uses: actions/cache@v2
+        env:
+          cache-name: rust-build
+        with:
+          path: target
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          restore-keys: |
+            ${{ env.cache-name }}-${{ runner.os }}-
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
