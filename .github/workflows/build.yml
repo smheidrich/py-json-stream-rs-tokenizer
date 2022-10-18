@@ -20,7 +20,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-11]
+        #os: [ubuntu-20.04, windows-2019, macos-11]
+        os: [ubuntu-20.04]  # dbg
     steps:
       - uses: actions/checkout@v3
       - name: Cargo home cache
@@ -45,7 +46,8 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux*
+            *musllinux* pp*
+          CIBW_ARCHS: x86_64
           CIBW_ENVIRONMENT: >
             CARGO_HOME="$PWD/.cargo"
             PATH="$PWD/.cargo/bin:$PATH"

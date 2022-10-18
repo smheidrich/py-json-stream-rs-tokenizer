@@ -29,7 +29,7 @@ setup(
             "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
         )
     },
-    python_requires=">=3.7,<4",
+    python_requires=">=3.8,<3.9",
     install_requires=[],
     extras_require={
         "benchmark": [
