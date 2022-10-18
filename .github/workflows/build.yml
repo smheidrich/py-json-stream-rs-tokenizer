@@ -30,7 +30,7 @@ jobs:
           cache-name: cargo-home
         with:
           path: .cargo
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v1
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v3
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
       - name: Rust build cache
@@ -39,9 +39,10 @@ jobs:
           cache-name: rust-build
         with:
           path: target
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v1
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v3
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
+      - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
@@ -49,11 +50,13 @@ jobs:
             *musllinux* pp*
           CIBW_ARCHS: x86_64
           CIBW_ENVIRONMENT: >
-            CARGO_HOME="$PWD/.cargo"
-            PATH="$PWD/.cargo/bin:$PATH"
-          CIBW_ENVIRONMENT_LINUX:
-            CARGO_HOME="/project/.cargo"
-            PATH="/project/.cargo/bin:$PATH"
+            CARGO_HOME="${{ env.MAIN_DIR }}/.cargo"
+            CARGO_TARGET_DIR="${{ env.MAIN_DIR }}/target"
+            PATH="${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
+          CIBW_ENVIRONMENT_LINUX: >
+            CARGO_HOME="/host/${{ env.MAIN_DIR }}/.cargo"
+            CARGO_TARGET_DIR="/host/${{ env.MAIN_DIR }}/target"
+            PATH="/host/${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
@@ -64,6 +67,9 @@ jobs:
             sh -s -- -y;
             rustup target add aarch64-apple-darwin
           CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_REPAIR_WHEEL_COMMAND: >
+            auditwheel repair -w {dest_dir} {wheel}; ls /host/; mount
+      - run: ls -la . .cargo target
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
