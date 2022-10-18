@@ -23,13 +23,13 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
-      - name: Cargo registry cache
+      - name: Cargo home cache
         uses: actions/cache@v2
         env:
-          cache-name: cargo-registry
+          cache-name: cargo-home
         with:
-          path: .cargo/registry
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          path: .cargo
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v1
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
       - name: Rust build cache
@@ -38,7 +38,7 @@ jobs:
           cache-name: rust-build
         with:
           path: target
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.lock') }}-v1
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v1
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
       - name: Build wheels
@@ -55,6 +55,8 @@ jobs:
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
+          CIBW_BEFORE_ALL_WINDOWS: >
+            curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
           CIBW_BEFORE_ALL_MACOS: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y;
