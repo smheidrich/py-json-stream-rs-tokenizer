@@ -28,11 +28,12 @@ jobs:
         env:
           cache-name: rust-build
         with:
-          path: cargo-target-dirs
+          path: ~/cargo-target-dirs
           key: ${{ env.cache-name }}-${{ runner.os }}-v3-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v3-
       - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
+      - run: echo "HOME=$HOME" >> "$GITHUB_ENV"
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
@@ -40,9 +41,11 @@ jobs:
             *musllinux*
           CIBW_ENVIRONMENT: >
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
+            HOST_HOME_DIR="${{ env.HOME }}"
             PATH="$HOME/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
+            HOST_HOME_DIR="/host/${{ env.HOME }}"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
@@ -58,16 +61,16 @@ jobs:
               python3 -c \
               'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
             );
-            mv -T "$HOST_PROJ_DIR/cargo-target-dirs/$ver" /project/target || true
+            mv -T "$HOST_HOME_DIR/cargo-target-dirs/$ver" /project/target || true
           CIBW_TEST_COMMAND: >
             ver=$( \
               python3 -c \
               'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
             );
-            mkdir -p "$HOST_PROJ_DIR/cargo-target-dirs/$ver";
-            mv -T /project/target "$HOST_PROJ_DIR/cargo-target-dirs/$ver"
+            mkdir -p "$HOST_HOME_DIR/cargo-target-dirs/$ver";
+            mv -T /project/target "$HOST_HOME_DIR/cargo-target-dirs/$ver"
       - name: Display Rust build cache contents
-        run: ls -la ./cargo-target-dirs
+        run: ls -la ~/cargo-target-dirs
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
