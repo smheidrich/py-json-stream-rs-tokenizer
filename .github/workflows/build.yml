@@ -30,7 +30,7 @@ jobs:
           cache-name: cargo-home
         with:
           path: .cargo
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v3
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v4
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
       - name: Rust build cache
@@ -39,7 +39,7 @@ jobs:
           cache-name: rust-build
         with:
           path: target
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v3
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ hashFiles('**/Cargo.toml') }}-v4
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-
       - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
@@ -50,12 +50,12 @@ jobs:
             *musllinux* pp*
           CIBW_ARCHS: x86_64
           CIBW_ENVIRONMENT: >
+            HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
             CARGO_HOME="${{ env.MAIN_DIR }}/.cargo"
-            CARGO_TARGET_DIR="${{ env.MAIN_DIR }}/target"
             PATH="${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
+            HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             CARGO_HOME="/host/${{ env.MAIN_DIR }}/.cargo"
-            CARGO_TARGET_DIR="/host/${{ env.MAIN_DIR }}/target"
             PATH="/host/${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
@@ -67,8 +67,19 @@ jobs:
             sh -s -- -y;
             rustup target add aarch64-apple-darwin
           CIBW_ARCHS_MACOS: "x86_64 arm64"
-          CIBW_REPAIR_WHEEL_COMMAND: >
-            auditwheel repair -w {dest_dir} {wheel}; ls /host/; mount
+          CIBW_BEFORE_BUILD_COMMAND:
+            ver=$(
+              python3 -c
+              'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))'
+            );
+            mv "$HOST_PROJ_DIR/cargo-target-dirs/$ver" /project/target || true
+          CIBW_TEST_COMMAND: >
+            ver=$(
+              python3 -c
+              'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))'
+            );
+            mkdir -p "$HOST_PROJ_DIR/cargo-target-dirs/$ver";
+            mv /project/target "$HOST_PROJ_DIR/cargo-target-dirs/$ver"
       - run: ls -la . .cargo target
       - uses: actions/upload-artifact@v3
         with:
