@@ -24,15 +24,6 @@ jobs:
         os: [ubuntu-20.04]  # dbg
     steps:
       - uses: actions/checkout@v3
-      - name: Cargo home cache
-        uses: actions/cache@v2
-        env:
-          cache-name: cargo-home
-        with:
-          path: .cargo
-          key: ${{ env.cache-name }}-${{ runner.os }}-v3-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-v3-
       - name: Rust build cache
         uses: actions/cache@v2
         env:
@@ -51,12 +42,8 @@ jobs:
           CIBW_ARCHS: x86_64
           CIBW_ENVIRONMENT: >
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
-            CARGO_HOME="${{ env.MAIN_DIR }}/.cargo"
-            PATH="${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
-            CARGO_HOME="/host/${{ env.MAIN_DIR }}/.cargo"
-            PATH="/host/${{ env.MAIN_DIR }}/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
