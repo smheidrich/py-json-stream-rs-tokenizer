@@ -46,6 +46,7 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: >
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             HOST_HOME_DIR="/host/${{ env.HOME }}"
+            PATH="$HOME/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
             curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
             sh -s -- -y
