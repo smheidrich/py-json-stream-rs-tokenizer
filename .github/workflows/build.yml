@@ -40,12 +40,10 @@ jobs:
           CIBW_SKIP: >
             *musllinux*
           CIBW_ENVIRONMENT: >
-            HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
             HOST_HOME_DIR="${{ env.HOME }}"
             PROJ_DIR="${{ env.MAIN_DIR }}"
             PATH="$HOME/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
-            HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             HOST_HOME_DIR="/host/${{ env.HOME }}"
             PROJ_DIR="/project"
             PATH="$HOME/.cargo/bin:$PATH"
