@@ -20,8 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [ubuntu-20.04, windows-2019, macos-11]
-        os: [ubuntu-20.04]  # dbg
+        os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
       - name: Rust build cache
@@ -38,10 +37,10 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux* pp*
-          CIBW_ARCHS: x86_64
+            *musllinux*
           CIBW_ENVIRONMENT: >
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
+            PATH="$HOME/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
           CIBW_BEFORE_ALL: >
