@@ -58,18 +58,9 @@ jobs:
             rustup target add aarch64-apple-darwin
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD: >
-            ver=$( \
-              python3 -c \
-              'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
-            );
-            mv "$HOST_HOME_DIR/cargo-target-dirs/$ver" "$PROJ_DIR/target" || true
+            bash $PROJ_DIR/ci-utils/before-build.sh
           CIBW_TEST_COMMAND: >
-            ver=$( \
-              python3 -c \
-              'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
-            );
-            mkdir -p "$HOST_HOME_DIR/cargo-target-dirs/$ver";
-            mv "$PROJ_DIR"/target "$HOST_HOME_DIR/cargo-target-dirs/$ver"
+            bash $PROJ_DIR/ci-utils/after-build.sh
       - name: Display Rust build cache contents
         run: ls ~/cargo-target-dirs
       - uses: actions/upload-artifact@v3
