@@ -30,16 +30,16 @@ jobs:
           cache-name: cargo-home
         with:
           path: ~/cargo-home-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v6-
+          key: ${{ env.cache-name }}-${{ runner.os }}-v7
       - name: Rust build cache
         uses: actions/cache@v2
         env:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v6-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v7-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-v6-
+            ${{ env.cache-name }}-${{ runner.os }}-v7-
       - name: Save env vars for cibuildwheel
         run: >
           echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
