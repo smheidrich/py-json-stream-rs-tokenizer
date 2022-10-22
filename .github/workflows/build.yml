@@ -71,7 +71,7 @@ jobs:
             mkdir -p "$HOST_HOME_DIR/cargo-target-dirs/$ver";
             mv "$PROJ_DIR"/target "$HOST_HOME_DIR/cargo-target-dirs/$ver"
       - name: Display Rust build cache contents
-        run: ls -la ~/cargo-target-dirs
+        run: ls ~/cargo-target-dirs
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
