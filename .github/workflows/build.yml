@@ -24,6 +24,13 @@ jobs:
         os: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v3
+      - name: Cargo home cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cargo-home
+        with:
+          path: ~/cargo-home-dirs
+          key: ${{ env.cache-name }}-${{ runner.os }}-v4-
       - name: Rust build cache
         uses: actions/cache@v2
         env:
@@ -33,9 +40,10 @@ jobs:
           key: ${{ env.cache-name }}-${{ runner.os }}-v4-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v4-
-      - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
-        shell: bash
-      - run: echo "HOME=$HOME" >> "$GITHUB_ENV"
+      - name: Save env vars for cibuildwheel
+        run: >
+          echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
+          echo "HOME=$HOME" >> "$GITHUB_ENV"
         shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
@@ -51,17 +59,14 @@ jobs:
             PROJ_DIR="/project"
             PATH="$HOME/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y
+            bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
           CIBW_BEFORE_ALL_WINDOWS: >
-            curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            bash %PROJ_DIR%/ci-utils/ensure-rust-win.sh
           CIBW_BEFORE_ALL_MACOS: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y;
-            rustup target add aarch64-apple-darwin
+            bash $PROJ_DIR/ci-utils/ensure-rust-macos.sh
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD: >
-            bash $PROJ_DIR/ci-utils/before-build.sh; ls -l $PROJ_DIR/src; ls -l $PROJ_DIR/target
+            bash $PROJ_DIR/ci-utils/before-build.sh; ls -l $PROJ_DIR/src; ls -l $PROJ_DIR/target || true
           CIBW_BEFORE_BUILD_WINDOWS: >
             bash ci-utils/before-build.sh
           CIBW_TEST_COMMAND: >
