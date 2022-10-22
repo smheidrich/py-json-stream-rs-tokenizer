@@ -30,9 +30,9 @@ jobs:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v3-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v4-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-v3-
+            ${{ env.cache-name }}-${{ runner.os }}-v4-
       - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
         shell: bash
       - run: echo "HOME=$HOME" >> "$GITHUB_ENV"
