@@ -11,11 +11,10 @@ ver=$( \
   | tee "$PROJ_DIR/outer-ver" \
 )
 rm -rf "$HOME/.cargo"
-mv "$HOST_HOME_DIR/cargo-home-dirs/$ver/.cargo" "$HOME/" || true
-echo "$HOME": 1>&2
-ls -la $HOME 1>&2
-echo "$HOME/.cargo": 1>&2
-ls -la "$HOME/.cargo" 1>&2
+rm -rf "$HOME/.rustup"
+mv "$HOST_HOME_DIR/cargo-home-dirs/$ver/.cargo" \
+  "$HOST_HOME_DIR/cargo-home-dirs/$ver/.rustup" \
+  "$HOME/" || true
 
 # check if cargo avail and download if not
 if ! cargo -V; then

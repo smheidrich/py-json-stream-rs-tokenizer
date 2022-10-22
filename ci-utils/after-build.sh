@@ -14,4 +14,4 @@ ver=$(cat "$PROJ_DIR/outer-ver")
 [ -n "$ver" ] || { echo "error loading outer version"; exit 1; }
 rm -rf "$HOST_HOME_DIR/cargo-home-dirs/$ver"
 mkdir -p "$HOST_HOME_DIR/cargo-home-dirs/$ver"
-cp -r "$HOME/.cargo" "$HOST_HOME_DIR/cargo-home-dirs/$ver/"
+cp -r "$HOME/.cargo" "$HOME/.rustup" "$HOST_HOME_DIR/cargo-home-dirs/$ver/"
