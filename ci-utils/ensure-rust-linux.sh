@@ -12,6 +12,10 @@ ver=$( \
 )
 rm -rf "$HOME/.cargo"
 mv "$HOST_HOME_DIR/cargo-home-dirs/$ver/.cargo" "$HOME/" || true
+echo "$HOME": 1>&2
+ls -la $HOME 1>&2
+echo "$HOME/.cargo": 1>&2
+ls -la "$HOME/.cargo" 1>&2
 
 # check if cargo avail and download if not
 if ! cargo -V; then
