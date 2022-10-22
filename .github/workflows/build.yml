@@ -33,7 +33,9 @@ jobs:
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v3-
       - run: echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV"
+        shell: bash
       - run: echo "HOME=$HOME" >> "$GITHUB_ENV"
+        shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
