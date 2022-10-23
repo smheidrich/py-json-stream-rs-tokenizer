@@ -80,7 +80,7 @@ jobs:
           CIBW_BEFORE_BUILD_WINDOWS: >
             bash ci-utils/before-build.sh
           CIBW_TEST_COMMAND: >
-            bash $PROJ_DIR/ci-utils/after-build.sh
+            bash $PROJ_DIR/ci-utils/after-build.sh; ls -l $PROJ_DIR
           CIBW_TEST_COMMAND_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/after-build.sh
       - name: Display Rust build cache contents
