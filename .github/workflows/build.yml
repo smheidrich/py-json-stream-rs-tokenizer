@@ -56,12 +56,18 @@ jobs:
             HOST_HOME_DIR="${{ env.HOME }}"
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
             PROJ_DIR="${{ env.MAIN_DIR }}"
-            PATH="$HOME/.cargo/bin:$PATH"
+            PATH="${{ env.HOME }}/.cargo/bin:$PATH"
+            CARGO_HOME="${{ env.HOME }}/.cargo"
+            RUSTUP_HOME="${{ env.HOME }}/.rustup"
+            CARGO_TARGET_DIR="${{ env.HOME }}/target"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_HOME_DIR="/host/${{ env.HOME }}"
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             PROJ_DIR="/project"
-            PATH="$HOME/.cargo/bin:$PATH"
+            PATH="/host/${{ env.HOME }}/.cargo/bin:$PATH"
+            CARGO_HOME="/host/${{ env.HOME }}/.cargo"
+            RUSTUP_HOME="/host/${{ env.HOME }}/.rustup"
+            CARGO_TARGET_DIR="/host/${{ env.HOME }}/target"
           CIBW_BEFORE_ALL: >
             bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
           CIBW_BEFORE_ALL_WINDOWS: >

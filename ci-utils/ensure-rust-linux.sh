@@ -10,11 +10,11 @@ ver=$( \
   'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
   | tee "$PROJ_DIR/outer-ver" \
 )
-rm -rf "$HOME/.cargo"
-rm -rf "$HOME/.rustup"
+rm -rf "$CARGO_HOME"
+rm -rf "$RUSTUP_HOME"
 mv "$HOST_HOME_DIR/cargo-home-dirs/$ver/.cargo" \
   "$HOST_HOME_DIR/cargo-home-dirs/$ver/.rustup" \
-  "$HOME/" || true
+  "$HOST_HOME_DIR/" || true
 
 # check if cargo avail and download if not
 if ! cargo -V; then
