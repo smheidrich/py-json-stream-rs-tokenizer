@@ -83,6 +83,7 @@ jobs:
             bash $PROJ_DIR/ci-utils/after-build.sh; ls -l $PROJ_DIR
           CIBW_TEST_COMMAND_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/after-build.sh
+          CIBW_BUILD_VERBOSITY: 1
       - name: Display Rust build cache contents
         run: ls ~/cargo-target-dirs
       - uses: actions/upload-artifact@v3
