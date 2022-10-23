@@ -24,6 +24,8 @@ jobs:
         os: [ubuntu-20.04]
     steps:
       - uses: actions/checkout@v3
+      - name: Restore mtimes of files in repo
+        uses: chetan/git-restore-mtime-action@v1.2
       - name: Cargo home cache
         uses: actions/cache@v2
         env:
