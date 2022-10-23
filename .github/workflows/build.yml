@@ -68,6 +68,7 @@ jobs:
             CARGO_HOME="/host/${{ env.HOME }}/.cargo"
             RUSTUP_HOME="/host/${{ env.HOME }}/.rustup"
             CARGO_TARGET_DIR="/host/${{ env.HOME }}/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
           CIBW_BEFORE_ALL: >
             bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
           CIBW_BEFORE_ALL_WINDOWS: >
