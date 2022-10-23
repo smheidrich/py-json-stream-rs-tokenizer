@@ -54,10 +54,12 @@ jobs:
             *musllinux* *pp*
           CIBW_ENVIRONMENT: >
             HOST_HOME_DIR="${{ env.HOME }}"
+            HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
             PROJ_DIR="${{ env.MAIN_DIR }}"
             PATH="$HOME/.cargo/bin:$PATH"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_HOME_DIR="/host/${{ env.HOME }}"
+            HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             PROJ_DIR="/project"
             PATH="$HOME/.cargo/bin:$PATH"
           CIBW_BEFORE_ALL: >

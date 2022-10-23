@@ -1,4 +1,8 @@
 #!/bin/bash
+# copy file mtimes from host
+shopt -s dotglob
+cp -r -a --attributes-only "$HOST_PROJ_DIR"/* "$PROJ_DIR"/
+# copy target dir
 ver=$( \
   python3 -c \
   'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
