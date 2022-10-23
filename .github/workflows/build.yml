@@ -76,11 +76,11 @@ jobs:
             bash $PROJ_DIR/ci-utils/ensure-rust-macos.sh
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD: >
-            bash $PROJ_DIR/ci-utils/before-build.sh; ls -l $PROJ_DIR/src; ls -l $PROJ_DIR/target || true
+            bash $PROJ_DIR/ci-utils/before-build.sh; ls -la $PROJ_DIR/src; ls -la $PROJ_DIR/target || true
           CIBW_BEFORE_BUILD_WINDOWS: >
             bash ci-utils/before-build.sh
           CIBW_TEST_COMMAND: >
-            bash $PROJ_DIR/ci-utils/after-build.sh; ls -l $PROJ_DIR
+            bash $PROJ_DIR/ci-utils/after-build.sh; ls -la $PROJ_DIR; ls -la $HOME
           CIBW_TEST_COMMAND_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/after-build.sh
           CIBW_BUILD_VERBOSITY: 1
