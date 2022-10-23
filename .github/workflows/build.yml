@@ -80,7 +80,7 @@ jobs:
           CIBW_BEFORE_BUILD_WINDOWS: >
             bash ci-utils/before-build.sh
           CIBW_TEST_COMMAND: >
-            bash $PROJ_DIR/ci-utils/after-build.sh; ls -la $PROJ_DIR; ls -la $HOME
+            bash $PROJ_DIR/ci-utils/after-build.sh; ls -la $PROJ_DIR; ls -la $HOME; ls -la $HOST_HOME_DIR
           CIBW_TEST_COMMAND_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/after-build.sh
           CIBW_BUILD_VERBOSITY: 1
