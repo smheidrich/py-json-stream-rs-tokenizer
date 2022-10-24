@@ -46,7 +46,8 @@ jobs:
       - name: Save env vars for cibuildwheel
         run: >
           echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
-          echo "HOME=$HOME" >> "$GITHUB_ENV"
+          echo "HOME=$HOME" >> "$GITHUB_ENV";
+          cat "$GITHUB_ENV"
         shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
