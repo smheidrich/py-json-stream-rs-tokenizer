@@ -22,3 +22,7 @@ if ! cargo -V; then
 else
   echo "Rust toolchain already installed, not downloading again"
 fi
+ls -la "$HOST_HOME_DIR"
+ls -la "$HOST_HOME_DIR/.rustup"
+cat "$HOST_HOME_DIR/.rustup/settings.toml"
+cargo -V
