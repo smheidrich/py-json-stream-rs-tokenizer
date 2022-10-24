@@ -8,7 +8,7 @@
 ver=$( \
   python3 -c \
   'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
-  | tee "$PROJ_DIR/outer-ver" \
+  | tee "$HOST_HOME_DIR/outer-ver" \
 )
 rm -rf "$CARGO_HOME"
 rm -rf "$RUSTUP_HOME"
