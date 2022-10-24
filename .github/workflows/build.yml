@@ -20,8 +20,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [ubuntu-20.04, windows-2019, macos-11]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
       - name: Restore mtimes of files in repo
@@ -32,7 +31,7 @@ jobs:
           cache-name: cargo-home
         with:
           path: ~/cargo-home-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v8.3
+          key: ${{ env.cache-name }}-${{ runner.os }}-v8.4
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v8.
       - name: Rust build cache
@@ -41,7 +40,7 @@ jobs:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v8.3-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v8.4-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v8.
       - name: Save env vars for cibuildwheel
@@ -53,7 +52,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux* *pp*
+            *musllinux*
           CIBW_ENVIRONMENT: >
             HOST_HOME_DIR="${{ env.HOME }}"
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
@@ -62,6 +61,7 @@ jobs:
             CARGO_HOME="${{ env.HOME }}/.cargo"
             RUSTUP_HOME="${{ env.HOME }}/.rustup"
             CARGO_TARGET_DIR="${{ env.HOME }}/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
           CIBW_ENVIRONMENT_LINUX: >
             HOST_HOME_DIR="/host/${{ env.HOME }}"
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
@@ -79,13 +79,12 @@ jobs:
             bash $PROJ_DIR/ci-utils/ensure-rust-macos.sh
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD: >
-            bash $PROJ_DIR/ci-utils/before-build.sh; ls -la $PROJ_DIR/src; ls -la $PROJ_DIR/target || true
+            bash $PROJ_DIR/ci-utils/before-build.sh
           CIBW_BEFORE_BUILD_WINDOWS: >
             bash ci-utils/before-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
             auditwheel repair -w {dest_dir} {wheel};
-            bash $PROJ_DIR/ci-utils/after-build.sh;
-            ls -la $PROJ_DIR; ls -la $HOME; ls -la $HOST_HOME_DIR
+            bash $PROJ_DIR/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
@@ -93,8 +92,6 @@ jobs:
             {delocate_archs} -w {dest_dir} {wheel};
             bash $PROJ_DIR/ci-utils/after-build.sh
           CIBW_BUILD_VERBOSITY: 1
-      - name: Display Rust build cache contents
-        run: ls ~/cargo-target-dirs
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
