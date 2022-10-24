@@ -52,7 +52,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux*
+            *musllinux* *pp*
           CIBW_ENVIRONMENT: >
             HOST_HOME_DIR="${{ env.HOME }}"
             HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
