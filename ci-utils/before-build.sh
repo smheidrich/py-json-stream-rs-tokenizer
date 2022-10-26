@@ -10,5 +10,3 @@ ver=$( \
 rm -rf "$HOST_HOME_DIR/target"
 mv "$HOST_HOME_DIR/cargo-target-dirs/$ver/target" "$HOST_HOME_DIR/" \
 || echo "Could not restore Cargo target dir from cache"
-echo "cargo ver:"
-cargo -V
