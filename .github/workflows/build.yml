@@ -46,7 +46,7 @@ jobs:
       - name: Save env vars for cibuildwheel
         run: >
           echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
-          echo "HOME=$HOME" >> "$GITHUB_ENV";
+          echo "OUTER_HOME=$HOME" >> "$GITHUB_ENV";
           cat "$GITHUB_ENV"
         shell: bash
       - name: Build wheels
@@ -54,23 +54,32 @@ jobs:
         env:
           CIBW_SKIP: >
             *musllinux* *pp*
-          CIBW_ENVIRONMENT: >
-            HOST_HOME_DIR="${{ env.HOME }}"
-            HOST_PROJ_DIR="${{ env.MAIN_DIR }}"
-            PROJ_DIR="${{ env.MAIN_DIR }}"
-            PATH="${{ env.HOME }}/.cargo/bin:$PATH"
-            CARGO_HOME="${{ env.HOME }}/.cargo"
-            RUSTUP_HOME="${{ env.HOME }}/.rustup"
-            CARGO_TARGET_DIR="${{ env.HOME }}/target"
-            CARGO_LOG="cargo::core::compiler::fingerprint=info"
           CIBW_ENVIRONMENT_LINUX: >
-            HOST_HOME_DIR="/host/${{ env.HOME }}"
+            HOST_HOME_DIR="/host/${{ env.OUTER_HOME }}"
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
             PROJ_DIR="/project"
-            PATH="/host/${{ env.HOME }}/.cargo/bin:$PATH"
-            CARGO_HOME="/host/${{ env.HOME }}/.cargo"
-            RUSTUP_HOME="/host/${{ env.HOME }}/.rustup"
-            CARGO_TARGET_DIR="/host/${{ env.HOME }}/target"
+            PATH="/host/${{ env.OUTER_HOME }}/.cargo/bin:$PATH"
+            CARGO_HOME="/host/${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME="/host/${{ env.OUTER_HOME }}/.rustup"
+            CARGO_TARGET_DIR="/host/${{ env.OUTER_HOME }}/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
+          CIBW_ENVIRONMENT_MACOS: >
+            HOST_HOME_DIR="$HOME"
+            HOST_PROJ_DIR="$GITHUB_WORKSPACE"
+            PROJ_DIR="$GITHUB_WORKSPACE"
+            PATH="$HOME/.cargo/bin:$PATH"
+            CARGO_HOME="$HOME/.cargo"
+            RUSTUP_HOME="$HOME/.rustup"
+            CARGO_TARGET_DIR="$HOME/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
+          CIBW_ENVIRONMENT_WINDOWS: >
+            HOST_HOME_DIR="$HOME"
+            HOST_PROJ_DIR="$GITHUB_WORKSPACE"
+            PROJ_DIR="$GITHUB_WORKSPACE"
+            PATH="$HOME\\.cargo\\bin;$PATH"
+            CARGO_HOME="$HOME\\.cargo"
+            RUSTUP_HOME="$HOME\\.rustup"
+            CARGO_TARGET_DIR="$HOME\\target"
             CARGO_LOG="cargo::core::compiler::fingerprint=info"
           CIBW_BEFORE_ALL: >
             bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
