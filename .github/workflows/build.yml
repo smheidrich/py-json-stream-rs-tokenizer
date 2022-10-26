@@ -25,6 +25,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Restore mtimes of files in repo
         uses: chetan/git-restore-mtime-action@v1.2
+      - uses: GuillaumeFalourd/setup-rsync@v1.1
       - name: Cargo home cache
         uses: actions/cache@v2
         env:
@@ -81,7 +82,8 @@ jobs:
             RUSTUP_HOME="$HOME\\.rustup"
             CARGO_TARGET_DIR="$HOME\\target"
             CARGO_LOG="cargo::core::compiler::fingerprint=info"
-          CIBW_BEFORE_ALL: >
+          CIBW_BEFORE_ALL_LINUX: >
+            yum -y install rsync;
             bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
           CIBW_BEFORE_ALL_WINDOWS: >
             bash %PROJ_DIR%/ci-utils/ensure-rust-win.sh
