@@ -96,7 +96,7 @@ jobs:
             auditwheel repair -w {dest_dir} {wheel};
             bash $PROJ_DIR/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
-            cp {wheel} {dest_dir};
+            cp {wheel} {dest_dir} &
             bash %PROJ_DIR%/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
             delocate-listdeps {wheel} && delocate-wheel --require-archs \
