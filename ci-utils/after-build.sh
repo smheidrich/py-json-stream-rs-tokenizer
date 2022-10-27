@@ -14,4 +14,4 @@ ver=$(cat "$HOST_HOME_DIR/outer-ver")
 [ -n "$ver" ] || { echo "error loading outer version"; exit 1; }
 #rm -rf "$HOST_HOME_DIR/cargo-home-dirs/$ver"
 mkdir -p "$HOST_HOME_DIR/cargo-home-dirs/$ver"
-rsync -au "$CARGO_HOME" "$RUSTUP_HOME" "$HOST_HOME_DIR/cargo-home-dirs/$ver/"
+rsync -au "$CARGO_HOME_UNIX" "$RUSTUP_HOME_UNIX" "$HOST_HOME_DIR_UNIX/cargo-home-dirs/$ver/"

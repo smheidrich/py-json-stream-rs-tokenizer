@@ -64,6 +64,9 @@ jobs:
             RUSTUP_HOME="/host/${{ env.OUTER_HOME }}/.rustup"
             CARGO_TARGET_DIR="/host/${{ env.OUTER_HOME }}/target"
             CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="/host/${{ env.OUTER_HOME }}"
+            CARGO_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.rustup"
           CIBW_ENVIRONMENT_MACOS: >
             HOST_HOME_DIR="$HOME"
             HOST_PROJ_DIR="$GITHUB_WORKSPACE"
@@ -73,6 +76,9 @@ jobs:
             RUSTUP_HOME="$HOME/.rustup"
             CARGO_TARGET_DIR="$HOME/target"
             CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="$HOME"
+            CARGO_HOME_UNIX="$HOME/.cargo"
+            RUSTUP_HOME_UNIX="$HOME/.rustup"
           CIBW_ENVIRONMENT_WINDOWS: >
             HOST_HOME_DIR="$HOME"
             HOST_PROJ_DIR="$GITHUB_WORKSPACE"
@@ -82,6 +88,9 @@ jobs:
             RUSTUP_HOME="$HOME\\.rustup"
             CARGO_TARGET_DIR="$HOME\\target"
             CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="${{ env.OUTER_HOME }}"
+            CARGO_HOME_UNIX="${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME_UNIX="${{ env.OUTER_HOME }}/.rustup"
           CIBW_BEFORE_ALL_LINUX: >
             yum -y install rsync;
             bash $PROJ_DIR/ci-utils/ensure-rust-linux.sh
