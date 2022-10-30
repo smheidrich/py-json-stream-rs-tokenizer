@@ -16,7 +16,7 @@ mv "$HOST_HOME_DIR/cargo-home-dirs/$ver/.cargo" \
 if ! cargo -V; then
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 else
-  echo "Rust toolchain already installed, not downloading again"
+  echo "Rust toolchain already installed/restored, not downloading again"
 fi
 rustup target add aarch64-apple-darwin
 

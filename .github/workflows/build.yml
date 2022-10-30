@@ -31,7 +31,7 @@ jobs:
           cache-name: cargo-home
         with:
           path: ~/cargo-home-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v9.0
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v9.
       - name: Rust build cache
@@ -40,7 +40,7 @@ jobs:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v9.0-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v9.
       - name: Save env vars for cibuildwheel
@@ -53,7 +53,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
-            *musllinux* *pp*
+            *musllinux*
           CIBW_ENVIRONMENT_LINUX: >
             HOST_HOME_DIR="/host/${{ env.OUTER_HOME }}"
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
