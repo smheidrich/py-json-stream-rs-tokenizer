@@ -23,21 +23,91 @@ jobs:
         os: [ubuntu-20.04, windows-2019, macos-11]
     steps:
       - uses: actions/checkout@v3
+      - name: Restore mtimes of files in repo
+        uses: chetan/git-restore-mtime-action@v1.2
+      - name: Cargo home cache
+        uses: actions/cache@v2
+        env:
+          cache-name: cargo-home
+        with:
+          path: ~/cargo-home-dirs
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1
+          restore-keys: |
+            ${{ env.cache-name }}-${{ runner.os }}-v9.
+      - name: Rust build cache
+        uses: actions/cache@v2
+        env:
+          cache-name: rust-build
+        with:
+          path: ~/cargo-target-dirs
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: |
+            ${{ env.cache-name }}-${{ runner.os }}-v9.
+      - name: Save env vars for cibuildwheel
+        run: >
+          echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
+          echo "OUTER_HOME=$HOME" >> "$GITHUB_ENV";
+          cat "$GITHUB_ENV"
+        shell: bash
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.10.2
         env:
           CIBW_SKIP: >
             *musllinux*
-          CIBW_BEFORE_ALL: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y
-          CIBW_BEFORE_ALL_MACOS: >
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs |
-            sh -s -- -y;
-            rustup target add aarch64-apple-darwin
-          CIBW_ENVIRONMENT: >
+          CIBW_ENVIRONMENT_LINUX: >
+            HOST_HOME_DIR="/host/${{ env.OUTER_HOME }}"
+            HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
+            PROJ_DIR="/project"
+            PATH="/host/${{ env.OUTER_HOME }}/.cargo/bin:$PATH"
+            CARGO_HOME="/host/${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME="/host/${{ env.OUTER_HOME }}/.rustup"
+            CARGO_TARGET_DIR="/host/${{ env.OUTER_HOME }}/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="/host/${{ env.OUTER_HOME }}"
+            CARGO_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.rustup"
+          CIBW_ENVIRONMENT_MACOS: >
+            HOST_HOME_DIR="$HOME"
+            HOST_PROJ_DIR="$GITHUB_WORKSPACE"
+            PROJ_DIR="$GITHUB_WORKSPACE"
             PATH="$HOME/.cargo/bin:$PATH"
+            CARGO_HOME="$HOME/.cargo"
+            RUSTUP_HOME="$HOME/.rustup"
+            CARGO_TARGET_DIR="$HOME/target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="$HOME"
+            CARGO_HOME_UNIX="$HOME/.cargo"
+            RUSTUP_HOME_UNIX="$HOME/.rustup"
+          CIBW_ENVIRONMENT_WINDOWS: >
+            HOST_HOME_DIR="$HOME"
+            HOST_PROJ_DIR="$GITHUB_WORKSPACE"
+            PROJ_DIR="$GITHUB_WORKSPACE"
+            PATH="$HOME\\.cargo\\bin;$PATH"
+            CARGO_HOME="$HOME\\.cargo"
+            RUSTUP_HOME="$HOME\\.rustup"
+            CARGO_TARGET_DIR="$HOME\\target"
+            CARGO_LOG="cargo::core::compiler::fingerprint=info"
+            HOST_HOME_DIR_UNIX="${{ env.OUTER_HOME }}"
+            CARGO_HOME_UNIX="${{ env.OUTER_HOME }}/.cargo"
+            RUSTUP_HOME_UNIX="${{ env.OUTER_HOME }}/.rustup"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
+          CIBW_BEFORE_BUILD_LINUX: >
+            bash $PROJ_DIR/ci-utils/before-build-linux.sh
+          CIBW_BEFORE_BUILD_MACOS: >
+            bash $PROJ_DIR/ci-utils/before-build-mac.sh
+          CIBW_BEFORE_BUILD_WINDOWS: >
+            bash ci-utils/before-build-win.sh
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
+            auditwheel repair -w {dest_dir} {wheel};
+            bash $PROJ_DIR/ci-utils/after-build.sh
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
+            cp {wheel} {dest_dir} &
+            bash %PROJ_DIR%/ci-utils/after-build.sh
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
+            delocate-listdeps {wheel} && delocate-wheel --require-archs \
+            {delocate_archs} -w {dest_dir} {wheel};
+            bash $PROJ_DIR/ci-utils/after-build.sh
+          CIBW_BUILD_VERBOSITY: 1
       - uses: actions/upload-artifact@v3
         with:
           path: ./wheelhouse/*.whl
