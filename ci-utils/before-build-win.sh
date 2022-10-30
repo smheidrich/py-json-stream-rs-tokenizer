@@ -1,13 +1,9 @@
 #!/bin/bash
 
-# try to restore from cache
-
-# note that while the version information in $ver is more specific than we need
-# here (really we just need to know which container image we're in), it's fine
-# because the unimportant information remains the same for the same image
+# try to restore Rust home dirs from cache
 ver=$( \
   python3 -c \
-  'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
+  'from platform import *; print("-".join([platform()]))' \
   | tee "$HOST_HOME_DIR/outer-ver" \
 )
 rm -rf "$CARGO_HOME"
@@ -23,3 +19,12 @@ else
   echo "Rust toolchain already installed, not downloading again"
 fi
 rustup target add i686-pc-windows-msvc
+
+# try to restore Rust target dir from cache
+ver=$( \
+  python3 -c \
+  'from platform import *; print("-".join([python_implementation(), python_version(), platform()]))' \
+)
+rm -rf "$HOST_HOME_DIR/target"
+mv "$HOST_HOME_DIR/cargo-target-dirs/$ver/target" "$HOST_HOME_DIR/" \
+|| echo "Could not restore Cargo target dir from cache"
