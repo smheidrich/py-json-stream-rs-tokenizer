@@ -31,7 +31,7 @@ jobs:
           cache-name: cargo-home
         with:
           path: ~/cargo-home-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.2
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v9.
       - name: Rust build cache
@@ -40,7 +40,7 @@ jobs:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v9.1-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v9.2-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
             ${{ env.cache-name }}-${{ runner.os }}-v9.
       - name: Save env vars for cibuildwheel
