@@ -118,9 +118,14 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(BufReader::new(PyFileLikeObject::with_requirements(
-                stream, true, false, false,
-            )?)),
+            stream: Box::new(
+                BufReader::with_capacity(
+                    4, // PyFileLikeObject divides this by 4 to get chunk size
+                    PyFileLikeObject::with_requirements(
+                        stream, true, false, false,
+                    )?,
+                )
+            ),
             completed: false,
             advance: true,
             token: String::new(),
