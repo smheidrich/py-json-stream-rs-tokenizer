@@ -16,6 +16,7 @@ from json_stream_rs_tokenizer import load
         ('{"a": 1} { "b": 2 }', 8),
         ('{"a":1} { "b": 2 }', 7),
         ('{ "a":1, "b": 2, "c": 3, "d": 4, "xyz": 99999 } { "b": 2 }', 47),
+        ('{ "a": [1, 2, 3, 4, 5 ], "d": 4, "xyz": 99999 } { "b": 2 }', 47),
     ],
 )
 def test_overconsumption_multiple_documents(s, expected_cursor_pos):
