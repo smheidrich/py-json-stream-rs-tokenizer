@@ -9,15 +9,18 @@ use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
-use std::io::BufRead;
-use std::io::BufReader;
 use std::num::ParseFloatError;
 use thiserror::Error;
-use utf8_chars::BufReadCharsExt;
 
 mod int;
 use crate::int::{AppropriateInt, ParseIntError};
+mod park_cursor;
+mod read_rewind;
+use crate::park_cursor::{ParkCursorBufReader, ParkCursorChars};
+mod opaque_seek;
 use std::str::FromStr;
+mod utf8_char_source;
+use crate::utf8_char_source::Utf8CharSource;
 
 mod char_or_eof;
 use crate::char_or_eof::CharOrEof;
@@ -66,7 +69,7 @@ enum State {
 
 #[pyclass]
 struct RustTokenizer {
-    stream: Box<dyn BufRead + Send>,
+    stream: Box<dyn ParkCursorChars + Send>,
     completed: bool,
     advance: bool,
     token: String,
@@ -118,14 +121,11 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(
-                BufReader::with_capacity(
-                    4, // PyFileLikeObject divides this by 4 to get chunk size
-                    PyFileLikeObject::with_requirements(
-                        stream, true, false, false,
-                    )?,
-                )
-            ),
+            stream: Box::new(ParkCursorBufReader::new(
+                PyFileLikeObject::with_requirements(
+                    stream, true, false, false,
+                )?,
+            )),
             completed: false,
             advance: true,
             token: String::new(),
@@ -147,17 +147,17 @@ impl RustTokenizer {
         let mut now_token;
         loop {
             if slf.advance {
-                match slf.stream.chars().next() {
-                    Some(r) => match r {
-                        Ok(r) => slf.c = Some(r),
-                        Err(e) => {
-                            let index = slf.index;
-                            return Err(PyIOError::new_err(format!(
-                                "I/O error while parsing (index {index}): {e:?}"
-                            )));
-                        }
+                match slf.stream.read_char() {
+                    Ok(r) => match r {
+                        Some(r) => slf.c = Some(r),
+                        None => slf.c = None,
                     },
-                    None => slf.c = None,
+                    Err(e) => {
+                        let index = slf.index;
+                        return Err(PyIOError::new_err(format!(
+                            "I/O error while parsing (index {index}): {e:?}"
+                        )));
+                    }
                 }
                 slf.index += 1;
             }
@@ -202,6 +202,7 @@ impl RustTokenizer {
                     slf.completed = false;
                     slf.state = State::Whitespace;
                     // final token
+                    println!("final token");
                     return Ok(Some(now_token));
                 }
                 None => {
@@ -211,6 +212,28 @@ impl RustTokenizer {
         } else {
             return Ok(None);
         }
+    }
+    /// Rewind the inner Python stream/file to undo readahead buffering.
+    ///
+    /// Required because reading char-by-char without buffering is
+    /// excruciatingly slow (1 Python read() call per char!), but buffering
+    /// leaves the cursor in random places that don't correspond to what has
+    /// actually been processed.
+    ///
+    /// This method brings it back to the last char that was actually
+    /// processed, so the JSON parser can call it when it sees the end of the
+    /// document has been reached and thereby allow reading the stream beyond
+    /// it without skipping anything.
+    fn park_cursor(
+        mut slf: PyRefMut<'_, Self>,
+        py: Python<'_>,
+    ) -> PyResult<()> {
+        if let Err(e) = slf.stream.park_cursor() {
+            return Err(PyValueError::new_err(format!(
+                "error rewinding stream to undo readahead: {e}"
+            )));
+        }
+        Ok(())
     }
 }
 
