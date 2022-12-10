@@ -20,4 +20,4 @@ pyo3-build-config = { version = "0.17.1", features = ["resolve-config"] }
 
 [patch.crates-io.pyo3-file]
 git = 'https://github.com/smheidrich/pyo3-file.git'
-branch = 'divide-buf-length-by-4-to-fix-textio-bug'
+branch = 'divide-buf-length-by-4-to-fix-textio-bug-forjsonstream'
