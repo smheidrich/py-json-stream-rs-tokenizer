@@ -7,20 +7,24 @@
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
-use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
 use std::num::ParseFloatError;
 use thiserror::Error;
+use crate::int::{AppropriateInt, ParseIntError};
+use crate::park_cursor::ParkCursorChars;
+use std::str::FromStr;
+use crate::suitable_text_stream::SuitableTextStream;
+use crate::py_text_stream::PyTextStream;
 
 mod int;
-use crate::int::{AppropriateInt, ParseIntError};
 mod park_cursor;
 mod read_rewind;
-use crate::park_cursor::{ParkCursorBufReader, ParkCursorChars};
 mod opaque_seek;
-use std::str::FromStr;
 mod utf8_char_source;
-use crate::utf8_char_source::Utf8CharSource;
+mod py_common;
+mod py_text_stream;
+mod suitable_text_stream;
+mod read_string;
 
 mod char_or_eof;
 use crate::char_or_eof::CharOrEof;
@@ -121,11 +125,7 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(ParkCursorBufReader::new(
-                PyFileLikeObject::with_requirements(
-                    stream, true, false, false,
-                )?,
-            )),
+            stream: Box::new(SuitableTextStream::new(PyTextStream::new(stream))),
             completed: false,
             advance: true,
             token: String::new(),
@@ -202,7 +202,6 @@ impl RustTokenizer {
                     slf.completed = false;
                     slf.state = State::Whitespace;
                     // final token
-                    println!("final token");
                     return Ok(Some(now_token));
                 }
                 None => {
@@ -226,7 +225,6 @@ impl RustTokenizer {
     /// it without skipping anything.
     fn park_cursor(
         mut slf: PyRefMut<'_, Self>,
-        py: Python<'_>,
     ) -> PyResult<()> {
         if let Err(e) = slf.stream.park_cursor() {
             return Err(PyValueError::new_err(format!(

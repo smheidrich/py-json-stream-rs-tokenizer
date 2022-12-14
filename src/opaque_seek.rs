@@ -4,7 +4,7 @@ use std::io::{Seek, SeekFrom};
 
 /// It is an error to do arithmetic on this number.
 #[derive(Copy, Clone)]
-pub struct OpaqueSeekPos(u64);
+pub struct OpaqueSeekPos(pub u64);
 
 #[derive(Copy, Clone)]
 pub enum OpaqueSeekFrom {
