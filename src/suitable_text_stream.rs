@@ -37,7 +37,7 @@ impl Utf8CharSource for SuitableTextStream {
             // TODO: I don't think this can handle actually getting to EOF very well (buf size
             // becomes 0? => no seek), but probably not relevant
             self.buf_start_seek_pos = Some(self.inner.seek(OpaqueSeekFrom::Current)?);
-            let buf = self.inner.read_string(1024)?; // TODO make configurable
+            let buf = self.inner.read_string(8000)?; // TODO make configurable
             self.chars_iter = buf.into_chars();
             self.chars_read_from_buf = 0;
             let oc = self.chars_iter.next();
