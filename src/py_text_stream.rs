@@ -1,10 +1,8 @@
 use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
 use crate::py_common::PySeekWhence;
 use crate::read_string::ReadString;
-use pyo3::types::PyString;
-use pyo3::{PyErr, PyObject, PyResult, Python};
+use pyo3::{PyObject, PyResult, Python};
 use std::io;
-use std::io::SeekFrom;
 
 /// Python file-like object (= stream) that outputs text.
 pub struct PyTextStream {
@@ -45,7 +43,8 @@ impl OpaqueSeek for PyTextStream {
                 .as_ref(py)
                 .call_method1("seek", (offset, whence))?
                 .extract::<u64>()
-        }).map(|x| OpaqueSeekPos(x))
+        })
+        .map(|x| OpaqueSeekPos(x))
         .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))
     }
 }
