@@ -12,8 +12,6 @@ crate-type = ["cdylib"]
 num-bigint = ">=0.4.3,<0.5"
 owned_chars = ">=0.3.2,<0.4"
 pyo3 = { version = ">=0.16.5,<0.17", features = ["extension-module", "num-bigint"] }
-pyo3-file = ">=0.5.0,<0.6"
-replace_with = "0.1.7"
 thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
@@ -21,7 +19,3 @@ utf8-io = ">=0.16.0,<0.17"
 
 [build-dependencies]
 pyo3-build-config = { version = "= 0.16.6", features = ["resolve-config"] }
-
-[patch.crates-io.pyo3-file]
-git = 'https://github.com/smheidrich/pyo3-file.git'
-branch = 'divide-buf-length-by-4-to-fix-textio-bug-forjsonstream'

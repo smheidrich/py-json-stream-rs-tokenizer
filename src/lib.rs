@@ -18,7 +18,6 @@ use crate::py_text_stream::PyTextStream;
 
 mod int;
 mod park_cursor;
-mod read_rewind;
 mod opaque_seek;
 mod utf8_char_source;
 mod py_common;

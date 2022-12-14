@@ -1,6 +1,4 @@
-use pyo3_file::PyFileLikeObject;
 use std::io;
-use std::io::{Seek, SeekFrom};
 
 /// It is an error to do arithmetic on this number.
 #[derive(Copy, Clone)]
@@ -23,24 +21,4 @@ pub enum OpaqueSeekFrom {
 /// undefined behavior. So don't do that.
 pub trait OpaqueSeek {
     fn seek(&mut self, pos: OpaqueSeekFrom) -> io::Result<OpaqueSeekPos>;
-}
-
-// XXX Implementation for PyFileLikeObject using pyo3-file's "broken" Seek.
-// See https://github.com/omerbenamram/pyo3-file/issues/8 for what I mean by
-// that.
-//
-// Yet again very hacky to use a (formally) incorrect impl. to implement the
-// correct one, but it works *shrug*
-
-impl OpaqueSeek for PyFileLikeObject {
-    fn seek(&mut self, pos: OpaqueSeekFrom) -> io::Result<OpaqueSeekPos> {
-        Ok(OpaqueSeekPos(Seek::seek(
-            self,
-            match pos {
-                OpaqueSeekFrom::Start(x) => SeekFrom::Start(x.0),
-                OpaqueSeekFrom::End => SeekFrom::End(0),
-                OpaqueSeekFrom::Current => SeekFrom::Current(0),
-            },
-        )?))
-    }
 }
