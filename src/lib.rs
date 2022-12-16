@@ -1,15 +1,12 @@
-use crate::int::{AppropriateInt, ParseIntError};
-use crate::park_cursor::ParkCursorChars;
-use crate::py_bytes_stream::PyBytesStream;
-use crate::py_text_stream::PyTextStream;
-use crate::suitable_bytes_stream::SuitableBytesStream;
-use crate::suitable_text_stream::SuitableTextStream;
 /// Rust port of json-stream's tokenizer.
 /// https://github.com/daggaz/json-stream
 /// Copyright (c) 2020 Jamie Cockburn
 /// json-stream's tokenizer was originally taken from the NAYA project.
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
+use crate::int::{AppropriateInt, ParseIntError};
+use crate::park_cursor::ParkCursorChars;
+use crate::suitable_stream::make_suitable_stream;
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
@@ -27,6 +24,7 @@ mod py_text_stream;
 mod read_string;
 mod suitable_bytes_stream;
 mod suitable_text_stream;
+mod suitable_stream;
 mod utf8_char_source;
 
 mod char_or_eof;
@@ -128,7 +126,7 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(SuitableBytesStream::new(PyBytesStream::new(stream))),
+            stream: make_suitable_stream(stream)?,
             completed: false,
             advance: true,
             token: String::new(),
