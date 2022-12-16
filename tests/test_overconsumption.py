@@ -9,6 +9,16 @@ import pytest
 from json_stream_rs_tokenizer import load
 
 
+@pytest.fixture(params=["str", "bytes"])
+def to_bytes_or_str_buf(request):
+    if request.param == "str":
+        return lambda s: StringIO(s)
+    elif request.param == "bytes":
+        return lambda s: BytesIO(s.encode("utf-8"))
+    else:
+        assert False
+
+
 @pytest.mark.parametrize(
     "s,expected_cursor_pos",
     [
@@ -19,7 +29,9 @@ from json_stream_rs_tokenizer import load
         ('{ "a": [1, 2, 3, 4, 5 ], "d": 4, "xyz": 99999 } { "b": 2 }', 47),
     ],
 )
-def test_overconsumption_multiple_documents(s, expected_cursor_pos):
-    buf = BytesIO(s.encode("utf-8"))
+def test_overconsumption_multiple_documents(
+    s, expected_cursor_pos, to_bytes_or_str_buf
+):
+    buf = to_bytes_or_str_buf(s)
     list(load(buf))
     assert buf.tell() == expected_cursor_pos
