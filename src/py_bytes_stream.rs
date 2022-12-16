@@ -1,6 +1,7 @@
-use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
 use crate::py_common::PySeekWhence;
-use pyo3::{PyObject, PyResult};
+use pyo3::{PyObject, PyResult, Python};
+use std::io;
+use std::io::{Read, Seek, SeekFrom};
 
 /// Python file-like object (= stream) that outputs bytes.
 pub struct PyBytesStream {
@@ -18,20 +19,32 @@ impl Read for PyBytesStream {
     // But I guess there can't be because for that we'd have to KNOW that it will never be read
     // again in Python (so the lifetime can be entirely in our hands), which we can't because there
     // is no way to annotate such facts in Python.
-    pub fn read(&mut self, &mut buf: [u8]) -> Result<usize> {
-        Python::with_gil(|py| -> PyResult<Vec<u8>> { self.inner.call_method1("read", (size,)) })?
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        let vec = Python::with_gil(|py| -> PyResult<Vec<u8>> {
+            self.inner
+                .as_ref(py)
+                .call_method1("read", (buf.len(),))?
+                .extract::<Vec<u8>>()
+        })
+        .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))?;
+        buf[..vec.len()].clone_from_slice(&vec);
+        Ok(vec.len())
     }
 }
 
 impl Seek for PyBytesStream {
-    pub fn seek(&mut self, pos: SeekFrom) -> Result<u64> {
-        let (offset, whence) = match pos {
-            SeekFrom::Start(x) => (x, 0),
-            SeekFrom::Current(x) => (x, 1),
-            SeekFrom::End(x) => (x, 2),
-        };
+    fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         Python::with_gil(|py| -> PyResult<u64> {
-            self.inner.call_method1("seek", (offset, whence))
+            let (offset, whence) = match pos {
+                SeekFrom::Start(x) => (x as i64, PySeekWhence::Set),
+                SeekFrom::Current(x) => (x as i64, PySeekWhence::Cur),
+                SeekFrom::End(x) => (x as i64, PySeekWhence::End),
+            };
+            self.inner
+                .as_ref(py)
+                .call_method1("seek", (offset, whence))?
+                .extract::<u64>()
         })
+        .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))
     }
 }
