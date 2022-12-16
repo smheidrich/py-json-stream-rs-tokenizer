@@ -20,6 +20,7 @@ def to_bytes_or_str_buf(request):
 
 
 # this test requires a version of json-stream that supports park_cursor()
+@pytest.mark.xfail(reason="json-stream chicken and egg problem")
 @pytest.mark.parametrize(
     "s,expected_cursor_pos",
     [
