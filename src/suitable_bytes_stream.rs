@@ -35,12 +35,7 @@ impl Utf8CharSource for SuitableBytesStream {
             {
                 Char::Eof => None,
                 Char::Char(c) => Some(c),
-                Char::NoData => {
-                    return io::Result::Err(io::Error::new(
-                        io::ErrorKind::Other,
-                        "should never happen",
-                    ));
-                }
+                Char::NoData => None,  // for us this means the same as EOF I guess?
             },
         )
     }
