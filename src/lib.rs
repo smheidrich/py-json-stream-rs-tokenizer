@@ -1,3 +1,9 @@
+use crate::int::{AppropriateInt, ParseIntError};
+use crate::park_cursor::ParkCursorChars;
+use crate::py_bytes_stream::PyBytesStream;
+use crate::py_text_stream::PyTextStream;
+use crate::suitable_bytes_stream::SuitableBytesStream;
+use crate::suitable_text_stream::SuitableTextStream;
 /// Rust port of json-stream's tokenizer.
 /// https://github.com/daggaz/json-stream
 /// Copyright (c) 2020 Jamie Cockburn
@@ -8,21 +14,19 @@ use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use std::borrow::BorrowMut;
 use std::num::ParseFloatError;
-use thiserror::Error;
-use crate::int::{AppropriateInt, ParseIntError};
-use crate::park_cursor::ParkCursorChars;
 use std::str::FromStr;
-use crate::suitable_text_stream::SuitableTextStream;
-use crate::py_text_stream::PyTextStream;
+use thiserror::Error;
 
 mod int;
-mod park_cursor;
 mod opaque_seek;
-mod utf8_char_source;
+mod park_cursor;
+mod py_bytes_stream;
 mod py_common;
 mod py_text_stream;
-mod suitable_text_stream;
 mod read_string;
+mod suitable_bytes_stream;
+mod suitable_text_stream;
+mod utf8_char_source;
 
 #[derive(Clone)]
 enum TokenType {
@@ -106,7 +110,7 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(SuitableTextStream::new(PyTextStream::new(stream))),
+            stream: Box::new(SuitableBytesStream::new(PyBytesStream::new(stream))),
             completed: false,
             advance: true,
             token: String::new(),
@@ -143,17 +147,14 @@ impl RustTokenizer {
             }
             match slf.c {
                 Some(c) => {
-                    match RustTokenizer::process_char(slf.borrow_mut(), py, c)
-                    {
+                    match RustTokenizer::process_char(slf.borrow_mut(), py, c) {
                         Ok(tok) => {
                             now_token = tok;
                             slf.state = slf.next_state.clone();
                         }
                         Err(e) => {
                             let index = slf.index;
-                            return Err(PyValueError::new_err(format!(
-                                "{e} at index {index}"
-                            )));
+                            return Err(PyValueError::new_err(format!("{e} at index {index}")));
                         }
                     }
                     if slf.completed {
@@ -174,9 +175,7 @@ impl RustTokenizer {
             }
             Err(e) => {
                 let index = slf.index;
-                return Err(PyValueError::new_err(format!(
-                    "{e} at index {index}"
-                )));
+                return Err(PyValueError::new_err(format!("{e} at index {index}")));
             }
         }
         if slf.completed {
@@ -208,9 +207,7 @@ impl RustTokenizer {
     /// processed, so the JSON parser can call it when it sees the end of the
     /// document has been reached and thereby allow reading the stream beyond
     /// it without skipping anything.
-    fn park_cursor(
-        mut slf: PyRefMut<'_, Self>,
-    ) -> PyResult<()> {
+    fn park_cursor(mut slf: PyRefMut<'_, Self>) -> PyResult<()> {
         if let Err(e) = slf.stream.park_cursor() {
             return Err(PyValueError::new_err(format!(
                 "error rewinding stream to undo readahead: {e}"
@@ -236,33 +233,27 @@ impl RustTokenizer {
             State::Whitespace => match c {
                 '{' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("{".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("{".into_py(py))));
                 }
                 '}' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("}".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("}".into_py(py))));
                 }
                 '[' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("[".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("[".into_py(py))));
                 }
                 ']' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("]".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("]".into_py(py))));
                 }
                 ',' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some(",".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some(",".into_py(py))));
                 }
                 ':' => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some(":".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some(":".into_py(py))));
                 }
                 '"' => {
                     slf.next_state = State::String_;
@@ -313,10 +304,7 @@ impl RustTokenizer {
                     slf.completed = true;
                     match AppropriateInt::from_str(&slf.token) {
                         Ok(parsed_num) => {
-                            now_token = Some((
-                                TokenType::Number,
-                                Some(parsed_num.into_py(py)),
-                            ));
+                            now_token = Some((TokenType::Number, Some(parsed_num.into_py(py))));
                         }
                         Err(ParseIntError::General(e)) => {
                             return Err(ParsingError::InvalidJson(format!(
@@ -471,8 +459,7 @@ impl RustTokenizer {
                 'e' => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Boolean, Some(false.into_py(py))));
+                    now_token = Some((TokenType::Boolean, Some(false.into_py(py))));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -504,8 +491,7 @@ impl RustTokenizer {
                 'e' => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Boolean, Some(true.into_py(py))));
+                    now_token = Some((TokenType::Boolean, Some(true.into_py(py))));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -548,10 +534,7 @@ impl RustTokenizer {
             State::String_ => match c {
                 '\"' => {
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::String_,
-                        Some(slf.token.clone().into_py(py)),
-                    ));
+                    now_token = Some((TokenType::String_, Some(slf.token.clone().into_py(py))));
                     slf.next_state = State::StringEnd;
                 }
                 '\\' => {

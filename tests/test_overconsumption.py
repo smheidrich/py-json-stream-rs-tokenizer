@@ -2,7 +2,7 @@
 Regression test for overconsumption of stream contents past the end of a doc:
 https://github.com/smheidrich/py-json-stream-rs-tokenizer/issues/47
 """
-from io import StringIO
+from io import BytesIO, StringIO
 
 import pytest
 
@@ -20,6 +20,6 @@ from json_stream_rs_tokenizer import load
     ],
 )
 def test_overconsumption_multiple_documents(s, expected_cursor_pos):
-    buf = StringIO(s)
+    buf = BytesIO(s.encode("utf-8"))
     list(load(buf))
     assert buf.tell() == expected_cursor_pos
