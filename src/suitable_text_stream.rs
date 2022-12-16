@@ -54,8 +54,8 @@ impl ParkCursorChars for SuitableTextStream {
         let chars_read_from_buf = self.chars_read_from_buf;
         if let Some(buf_start_seek_pos) = self.buf_start_seek_pos {
             self.inner.seek(OpaqueSeekFrom::Start(buf_start_seek_pos))?;
-            let buf = self.inner.read_string(chars_read_from_buf)?;
-            self.chars_iter = buf.into_chars();
+            self.inner.read_string(chars_read_from_buf)?;
+            self.chars_iter = OwnedChars::from_string("".to_owned());
         }
         Ok(())
     }
