@@ -25,6 +25,7 @@ mod read_string;
 mod suitable_seekable_bytes_stream;
 mod suitable_seekable_text_stream;
 mod suitable_stream;
+mod suitable_unseekable_text_stream;
 mod utf8_char_source;
 
 mod char_or_eof;
