@@ -35,7 +35,7 @@ impl Utf8CharSource for SuitableSeekableBytesStream {
             {
                 Char::Eof => None,
                 Char::Char(c) => Some(c),
-                Char::NoData => None,  // for us this means the same as EOF I guess?
+                Char::NoData => None, // for us this means the same as EOF I guess?
             },
         )
     }
