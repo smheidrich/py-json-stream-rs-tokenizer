@@ -1,8 +1,8 @@
 use crate::park_cursor::ParkCursorChars;
 use crate::py_bytes_stream::PyBytesStream;
 use crate::py_text_stream::PyTextStream;
-use crate::suitable_bytes_stream::SuitableBytesStream;
-use crate::suitable_text_stream::SuitableTextStream;
+use crate::suitable_seekable_bytes_stream::SuitableSeekableBytesStream;
+use crate::suitable_seekable_text_stream::SuitableSeekableTextStream;
 use pyo3::exceptions::PyTypeError;
 use pyo3::types::{PyBytes, PyString};
 use pyo3::{PyObject, PyResult, Python};
@@ -25,10 +25,12 @@ pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn ParkCursorChar
         }
     })?;
     match read_return_type {
-        ReadReturnType::String => Ok(Box::new(SuitableTextStream::new(PyTextStream::new(stream)))),
-        ReadReturnType::Bytes => Ok(Box::new(SuitableBytesStream::new(PyBytesStream::new(
-            stream,
-        )))),
+        ReadReturnType::String => Ok(Box::new(SuitableSeekableTextStream::new(
+            PyTextStream::new(stream),
+        ))),
+        ReadReturnType::Bytes => Ok(Box::new(SuitableSeekableBytesStream::new(
+            PyBytesStream::new(stream),
+        ))),
         ReadReturnType::Other(t) => Err(PyTypeError::new_err(format!(
             "unsuitable stream data type '{}'",
             t

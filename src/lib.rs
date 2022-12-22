@@ -22,8 +22,8 @@ mod py_bytes_stream;
 mod py_common;
 mod py_text_stream;
 mod read_string;
-mod suitable_bytes_stream;
-mod suitable_text_stream;
+mod suitable_seekable_bytes_stream;
+mod suitable_seekable_text_stream;
 mod suitable_stream;
 mod utf8_char_source;
 
