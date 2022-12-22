@@ -9,21 +9,21 @@ use utf8_read::{Char, Reader};
 /// Python bytes stream wrapper that makes it "suitable" for use in the Tokenizer.
 ///
 /// This means that the necessary traits (see below) are implemented for it.
-pub struct SuitableBytesStream {
+pub struct SuitableSeekableBytesStream {
     // note that this is not actually optional, it's just a shitty hack because I'm too dumb to
     // placate Rust when temporarily moving the reader out of the struct within a method...
     reader: Option<Reader<PyBytesStream>>,
 }
 
-impl SuitableBytesStream {
+impl SuitableSeekableBytesStream {
     pub fn new(inner: PyBytesStream) -> Self {
-        SuitableBytesStream {
+        SuitableSeekableBytesStream {
             reader: Some(Reader::new(inner)),
         }
     }
 }
 
-impl Utf8CharSource for SuitableBytesStream {
+impl Utf8CharSource for SuitableSeekableBytesStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         Ok(
             match self
@@ -41,7 +41,7 @@ impl Utf8CharSource for SuitableBytesStream {
     }
 }
 
-impl ParkCursorChars for SuitableBytesStream {
+impl ParkCursorChars for SuitableSeekableBytesStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         let reader = take(&mut self.reader);
         let (mut inner, _pos, rem_buffered_bytes) = reader.unwrap().complete();
