@@ -15,6 +15,7 @@ pyo3 = { version = "0.16.5", features = ["extension-module", "num-bigint"] }
 thiserror = "1.0.37"
 utf8-chars = "2.0.2"
 utf8-read = "0.4.0"
+utf8-width = "0.1.6"
 
 [build-dependencies]
 pyo3-build-config = { version = "0.17.1", features = ["resolve-config"] }

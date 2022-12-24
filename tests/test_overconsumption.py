@@ -9,7 +9,7 @@ import pytest
 from json_stream_rs_tokenizer import RustTokenizer, load
 
 
-@pytest.fixture(params=["str", "bytes", "str-unseekable"])
+@pytest.fixture(params=["str", "bytes", "str-unseekable", "bytes-unseekable"])
 def to_bytes_or_str_buf(request):
     if request.param == "str":
         return lambda s: StringIO(s)
@@ -23,6 +23,14 @@ def to_bytes_or_str_buf(request):
         return make_unseekable_stringio
     elif request.param == "bytes":
         return lambda s: BytesIO(s.encode("utf-8"))
+    elif request.param == "bytes-unseekable":
+
+        def make_unseekable_bytesio(s: str):
+            bio = BytesIO(s.encode("utf-8"))
+            bio.seekable = lambda: False
+            return bio
+
+        return make_unseekable_bytesio
     else:
         assert False
 

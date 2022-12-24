@@ -3,6 +3,7 @@ use crate::py_bytes_stream::PyBytesStream;
 use crate::py_text_stream::PyTextStream;
 use crate::suitable_seekable_bytes_stream::SuitableSeekableBytesStream;
 use crate::suitable_seekable_text_stream::SuitableSeekableTextStream;
+use crate::suitable_unseekable_bytes_stream::SuitableUnseekableBytesStream;
 use crate::suitable_unseekable_text_stream::SuitableUnseekableTextStream;
 use pyo3::exceptions::PyTypeError;
 use pyo3::types::{PyBytes, PyString};
@@ -40,9 +41,14 @@ pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn ParkCursorChar
                 Box::new(SuitableUnseekableTextStream::new(py_text_stream))
             })
         }
-        ReadReturnType::Bytes => Ok(Box::new(SuitableSeekableBytesStream::new(
-            PyBytesStream::new(stream),
-        ))),
+        ReadReturnType::Bytes => {
+            let py_bytes_stream = PyBytesStream::new(stream);
+            Ok(if seekable {
+                Box::new(SuitableSeekableBytesStream::new(py_bytes_stream))
+            } else {
+                Box::new(SuitableUnseekableBytesStream::new(py_bytes_stream))
+            })
+        }
         ReadReturnType::Other(t) => Err(PyTypeError::new_err(format!(
             "unsuitable stream data type '{}'",
             t
