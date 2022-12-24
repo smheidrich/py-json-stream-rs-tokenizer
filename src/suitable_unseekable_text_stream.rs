@@ -1,6 +1,7 @@
 use crate::park_cursor::ParkCursorChars;
 use crate::py_text_stream::PyTextStream;
 use crate::read_string::ReadString;
+use crate::remainder::{Remainder, StreamData};
 use crate::utf8_char_source::Utf8CharSource;
 use std::io;
 
@@ -44,5 +45,11 @@ impl ParkCursorChars for SuitableUnseekableTextStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         // no-op
         Ok(())
+    }
+}
+
+impl Remainder for SuitableUnseekableTextStream {
+    fn remainder(&self) -> StreamData {
+        StreamData::Text(String::from(""))
     }
 }
