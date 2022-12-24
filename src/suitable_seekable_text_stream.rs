@@ -2,6 +2,7 @@ use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
 use crate::park_cursor::ParkCursorChars;
 use crate::py_text_stream::PyTextStream;
 use crate::read_string::ReadString;
+use crate::remainder::{Remainder, StreamData};
 use crate::utf8_char_source::Utf8CharSource;
 use owned_chars::{OwnedChars, OwnedCharsExt};
 use std::io;
@@ -58,5 +59,11 @@ impl ParkCursorChars for SuitableSeekableTextStream {
             self.chars_iter = OwnedChars::from_string("".to_owned());
         }
         Ok(())
+    }
+}
+
+impl Remainder for SuitableSeekableTextStream {
+    fn remainder(&self) -> StreamData {
+        StreamData::Text(String::from(self.chars_iter.as_str()))
     }
 }

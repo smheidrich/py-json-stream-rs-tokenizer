@@ -1,6 +1,11 @@
+/// Utility for dynamically constructing an appropriate "suitable" stream from a raw Python stream.
+///
+/// "Suitable" means that it implements ParkCursorChars (too lazy to make another trait for that),
+/// although it can be a no-op.
 use crate::park_cursor::ParkCursorChars;
 use crate::py_bytes_stream::PyBytesStream;
 use crate::py_text_stream::PyTextStream;
+use crate::remainder::Remainder;
 use crate::suitable_seekable_bytes_stream::SuitableSeekableBytesStream;
 use crate::suitable_seekable_text_stream::SuitableSeekableTextStream;
 use crate::suitable_unseekable_bytes_stream::SuitableUnseekableBytesStream;
@@ -9,13 +14,17 @@ use pyo3::exceptions::PyTypeError;
 use pyo3::types::{PyBytes, PyString};
 use pyo3::{PyObject, PyResult, Python};
 
+pub trait SuitableStream: ParkCursorChars + Remainder {}
+
+impl<T: ParkCursorChars + Remainder> SuitableStream for T {}
+
 enum ReadReturnType {
     String,
     Bytes,
     Other(String),
 }
 
-pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn ParkCursorChars + Send>> {
+pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn SuitableStream + Send>> {
     let read_return_type: ReadReturnType = Python::with_gil(|py| -> PyResult<ReadReturnType> {
         let read_result = stream.as_ref(py).call_method1("read", (0,))?;
         if read_result.is_instance_of::<PyString>()? {

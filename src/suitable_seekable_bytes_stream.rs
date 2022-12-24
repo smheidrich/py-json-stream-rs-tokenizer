@@ -1,5 +1,6 @@
 use crate::park_cursor::ParkCursorChars;
 use crate::py_bytes_stream::PyBytesStream;
+use crate::remainder::{Remainder, StreamData};
 use crate::utf8_char_source::Utf8CharSource;
 use std::io;
 use std::io::{Seek, SeekFrom};
@@ -49,5 +50,14 @@ impl ParkCursorChars for SuitableSeekableBytesStream {
         // TODO this should be done even if ^ returns an error:
         self.reader = Some(Reader::new(inner));
         Ok(())
+    }
+}
+
+impl Remainder for SuitableSeekableBytesStream {
+    fn remainder(&self) -> StreamData {
+        StreamData::Bytes(match &self.reader {
+            Some(reader) => reader.borrow_buffer().to_owned(),
+            None => vec![0; 0],
+        })
     }
 }
