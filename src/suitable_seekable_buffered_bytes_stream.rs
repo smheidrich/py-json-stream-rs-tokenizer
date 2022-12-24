@@ -10,21 +10,21 @@ use utf8_read::{Char, Reader};
 /// Python bytes stream wrapper that makes it "suitable" for use in the Tokenizer.
 ///
 /// This means that the necessary traits (see below) are implemented for it.
-pub struct SuitableSeekableBytesStream {
+pub struct SuitableSeekableBufferedBytesStream {
     // note that this is not actually optional, it's just a shitty hack because I'm too dumb to
     // placate Rust when temporarily moving the reader out of the struct within a method...
     reader: Option<Reader<PyBytesStream>>,
 }
 
-impl SuitableSeekableBytesStream {
+impl SuitableSeekableBufferedBytesStream {
     pub fn new(inner: PyBytesStream) -> Self {
-        SuitableSeekableBytesStream {
+        SuitableSeekableBufferedBytesStream {
             reader: Some(Reader::new(inner)),
         }
     }
 }
 
-impl Utf8CharSource for SuitableSeekableBytesStream {
+impl Utf8CharSource for SuitableSeekableBufferedBytesStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         Ok(
             match self
@@ -42,7 +42,7 @@ impl Utf8CharSource for SuitableSeekableBytesStream {
     }
 }
 
-impl ParkCursorChars for SuitableSeekableBytesStream {
+impl ParkCursorChars for SuitableSeekableBufferedBytesStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         let reader = take(&mut self.reader);
         let (mut inner, _pos, rem_buffered_bytes) = reader.unwrap().complete();
@@ -53,7 +53,7 @@ impl ParkCursorChars for SuitableSeekableBytesStream {
     }
 }
 
-impl Remainder for SuitableSeekableBytesStream {
+impl Remainder for SuitableSeekableBufferedBytesStream {
     fn remainder(&self) -> StreamData {
         StreamData::Bytes(match &self.reader {
             Some(reader) => reader.borrow_buffer().to_owned(),
