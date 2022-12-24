@@ -12,17 +12,17 @@ use utf8_width::get_width;
 ///
 /// This is the variant for unseekable streams. Chars are read in from Python one-by-one, which is
 /// very slow but prevents readahead buffering.
-pub struct SuitableUnseekableBytesStream {
+pub struct SuitableUnbufferedBytesStream {
     inner: PyBytesStream,
 }
 
-impl SuitableUnseekableBytesStream {
+impl SuitableUnbufferedBytesStream {
     pub fn new(inner: PyBytesStream) -> Self {
-        SuitableUnseekableBytesStream { inner }
+        SuitableUnbufferedBytesStream { inner }
     }
 }
 
-impl Utf8CharSource for SuitableUnseekableBytesStream {
+impl Utf8CharSource for SuitableUnbufferedBytesStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         let mut buf: [u8; 4] = [0; 4];
         let n_bytes_read = self.inner.read(&mut buf[..1])?;
@@ -59,14 +59,14 @@ impl Utf8CharSource for SuitableUnseekableBytesStream {
     }
 }
 
-impl ParkCursorChars for SuitableUnseekableBytesStream {
+impl ParkCursorChars for SuitableUnbufferedBytesStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         // no-op
         Ok(())
     }
 }
 
-impl Remainder for SuitableUnseekableBytesStream {
+impl Remainder for SuitableUnbufferedBytesStream {
     fn remainder(&self) -> StreamData {
         StreamData::Bytes(vec![0; 0])
     }
