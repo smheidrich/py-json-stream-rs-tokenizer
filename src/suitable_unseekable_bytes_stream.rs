@@ -1,5 +1,6 @@
 use crate::park_cursor::ParkCursorChars;
 use crate::py_bytes_stream::PyBytesStream;
+use crate::remainder::{Remainder, StreamData};
 use crate::utf8_char_source::Utf8CharSource;
 use std::io;
 use std::io::Read;
@@ -62,5 +63,11 @@ impl ParkCursorChars for SuitableUnseekableBytesStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         // no-op
         Ok(())
+    }
+}
+
+impl Remainder for SuitableUnseekableBytesStream {
+    fn remainder(&self) -> StreamData {
+        StreamData::Bytes(vec![0; 0])
     }
 }

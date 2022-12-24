@@ -5,8 +5,8 @@
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
 use crate::int::{AppropriateInt, ParseIntError};
-use crate::park_cursor::ParkCursorChars;
-use crate::suitable_stream::make_suitable_stream;
+use crate::remainder::StreamData;
+use crate::suitable_stream::{make_suitable_stream, SuitableStream};
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
@@ -22,6 +22,7 @@ mod py_bytes_stream;
 mod py_common;
 mod py_text_stream;
 mod read_string;
+mod remainder;
 mod suitable_seekable_bytes_stream;
 mod suitable_seekable_text_stream;
 mod suitable_stream;
@@ -76,7 +77,7 @@ enum State {
 
 #[pyclass]
 struct RustTokenizer {
-    stream: Box<dyn ParkCursorChars + Send>,
+    stream: Box<dyn SuitableStream + Send>,
     completed: bool,
     advance: bool,
     token: String,
@@ -233,6 +234,11 @@ impl RustTokenizer {
             )));
         }
         Ok(())
+    }
+    /// Bytes or chars (depending on stream type) that have been buffered but not yet procesed.
+    #[getter]
+    fn remainder(slf: PyRefMut<'_, Self>) -> StreamData {
+        slf.stream.remainder()
     }
 }
 
