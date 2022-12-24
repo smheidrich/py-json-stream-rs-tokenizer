@@ -11,16 +11,16 @@ use std::iter::Iterator;
 /// Python text stream wrapper that makes it "suitable" for use in the Tokenizer.
 ///
 /// This means that the necessary traits (see below) are implemented for it.
-pub struct SuitableSeekableTextStream {
+pub struct SuitableSeekableBufferedTextStream {
     inner: PyTextStream,
     chars_iter: OwnedChars,
     chars_read_from_buf: usize,
     buf_start_seek_pos: Option<OpaqueSeekPos>,
 }
 
-impl SuitableSeekableTextStream {
+impl SuitableSeekableBufferedTextStream {
     pub fn new(inner: PyTextStream) -> Self {
-        SuitableSeekableTextStream {
+        SuitableSeekableBufferedTextStream {
             inner,
             chars_iter: OwnedChars::from_string("".to_owned()),
             chars_read_from_buf: 0,
@@ -29,7 +29,7 @@ impl SuitableSeekableTextStream {
     }
 }
 
-impl Utf8CharSource for SuitableSeekableTextStream {
+impl Utf8CharSource for SuitableSeekableBufferedTextStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         if let Some(c) = self.chars_iter.next() {
             self.chars_read_from_buf += 1;
@@ -50,7 +50,7 @@ impl Utf8CharSource for SuitableSeekableTextStream {
     }
 }
 
-impl ParkCursorChars for SuitableSeekableTextStream {
+impl ParkCursorChars for SuitableSeekableBufferedTextStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         let chars_read_from_buf = self.chars_read_from_buf;
         if let Some(buf_start_seek_pos) = self.buf_start_seek_pos {
@@ -62,7 +62,7 @@ impl ParkCursorChars for SuitableSeekableTextStream {
     }
 }
 
-impl Remainder for SuitableSeekableTextStream {
+impl Remainder for SuitableSeekableBufferedTextStream {
     fn remainder(&self) -> StreamData {
         StreamData::Text(String::from(self.chars_iter.as_str()))
     }

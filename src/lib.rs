@@ -23,11 +23,11 @@ mod py_common;
 mod py_text_stream;
 mod read_string;
 mod remainder;
-mod suitable_seekable_bytes_stream;
-mod suitable_seekable_text_stream;
+mod suitable_seekable_buffered_bytes_stream;
+mod suitable_seekable_buffered_text_stream;
 mod suitable_stream;
-mod suitable_unseekable_bytes_stream;
-mod suitable_unseekable_text_stream;
+mod suitable_unbuffered_bytes_stream;
+mod suitable_unbuffered_text_stream;
 mod utf8_char_source;
 
 mod char_or_eof;

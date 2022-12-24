@@ -11,17 +11,17 @@ use std::io;
 ///
 /// This is the variant for unseekable streams. Chars are read in from Python one-by-one, which is
 /// very slow but prevents readahead buffering.
-pub struct SuitableUnseekableTextStream {
+pub struct SuitableUnbufferedTextStream {
     inner: PyTextStream,
 }
 
-impl SuitableUnseekableTextStream {
+impl SuitableUnbufferedTextStream {
     pub fn new(inner: PyTextStream) -> Self {
-        SuitableUnseekableTextStream { inner }
+        SuitableUnbufferedTextStream { inner }
     }
 }
 
-impl Utf8CharSource for SuitableUnseekableTextStream {
+impl Utf8CharSource for SuitableUnbufferedTextStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         let s = self.inner.read_string(1)?;
         if s.is_empty() {
@@ -41,14 +41,14 @@ impl Utf8CharSource for SuitableUnseekableTextStream {
     }
 }
 
-impl ParkCursorChars for SuitableUnseekableTextStream {
+impl ParkCursorChars for SuitableUnbufferedTextStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         // no-op
         Ok(())
     }
 }
 
-impl Remainder for SuitableUnseekableTextStream {
+impl Remainder for SuitableUnbufferedTextStream {
     fn remainder(&self) -> StreamData {
         StreamData::Text(String::from(""))
     }

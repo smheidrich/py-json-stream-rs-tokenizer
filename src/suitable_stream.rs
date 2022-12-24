@@ -6,10 +6,10 @@ use crate::park_cursor::ParkCursorChars;
 use crate::py_bytes_stream::PyBytesStream;
 use crate::py_text_stream::PyTextStream;
 use crate::remainder::Remainder;
-use crate::suitable_seekable_bytes_stream::SuitableSeekableBytesStream;
-use crate::suitable_seekable_text_stream::SuitableSeekableTextStream;
-use crate::suitable_unseekable_bytes_stream::SuitableUnseekableBytesStream;
-use crate::suitable_unseekable_text_stream::SuitableUnseekableTextStream;
+use crate::suitable_seekable_buffered_bytes_stream::SuitableSeekableBufferedBytesStream;
+use crate::suitable_seekable_buffered_text_stream::SuitableSeekableBufferedTextStream;
+use crate::suitable_unbuffered_bytes_stream::SuitableUnbufferedBytesStream;
+use crate::suitable_unbuffered_text_stream::SuitableUnbufferedTextStream;
 use pyo3::exceptions::PyTypeError;
 use pyo3::types::{PyBytes, PyString};
 use pyo3::{PyObject, PyResult, Python};
@@ -45,17 +45,17 @@ pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn SuitableStream
         ReadReturnType::String => {
             let py_text_stream = PyTextStream::new(stream);
             Ok(if seekable {
-                Box::new(SuitableSeekableTextStream::new(py_text_stream))
+                Box::new(SuitableSeekableBufferedTextStream::new(py_text_stream))
             } else {
-                Box::new(SuitableUnseekableTextStream::new(py_text_stream))
+                Box::new(SuitableUnbufferedTextStream::new(py_text_stream))
             })
         }
         ReadReturnType::Bytes => {
             let py_bytes_stream = PyBytesStream::new(stream);
             Ok(if seekable {
-                Box::new(SuitableSeekableBytesStream::new(py_bytes_stream))
+                Box::new(SuitableSeekableBufferedBytesStream::new(py_bytes_stream))
             } else {
-                Box::new(SuitableUnseekableBytesStream::new(py_bytes_stream))
+                Box::new(SuitableUnbufferedBytesStream::new(py_bytes_stream))
             })
         }
         ReadReturnType::Other(t) => Err(PyTypeError::new_err(format!(
