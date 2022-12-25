@@ -1,4 +1,5 @@
-use pyo3::{IntoPy, PyObject, Python};
+use pyo3::types::PyBytes;
+use pyo3::{IntoPy, PyObject, Python, ToPyObject};
 
 pub enum StreamData {
     Text(String),
@@ -21,7 +22,7 @@ impl IntoPy<PyObject> for StreamData {
     fn into_py(self, py: Python<'_>) -> PyObject {
         match self {
             StreamData::Text(s) => s.into_py(py),
-            StreamData::Bytes(b) => b.into_py(py),
+            StreamData::Bytes(b) => PyBytes::new(py, b.as_slice()).to_object(py),
         }
     }
 }

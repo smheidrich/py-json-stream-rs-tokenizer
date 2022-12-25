@@ -35,6 +35,17 @@ def to_bytes_or_str_buf(request):
         assert False
 
 
+@pytest.fixture()
+def to_bytes_or_str(to_bytes_or_str_buf):
+    xio = to_bytes_or_str_buf("")
+    if isinstance(xio, StringIO):
+        return lambda s: s
+    elif isinstance(xio, BytesIO):
+        return lambda s: s.encode("utf-8")
+    else:
+        assert False
+
+
 # this test requires a version of json-stream that supports park_cursor()
 @pytest.mark.xfail(reason="json-stream chicken and egg problem")
 @pytest.mark.parametrize(
@@ -97,17 +108,20 @@ def test_overconsumption_park_cursor_skip_3_chars_and_continue(
         ('{ "æ": [1, 2, 3, 4, 5 ], "ð": 4, "xyz": 9 } | { "b": 2 }'),
     ],
 )
-def test_overconsumes_when_correct_cursor_disabled(s, to_bytes_or_str_buf):
+def test_correct_cursor_disabled(s, to_bytes_or_str_buf, to_bytes_or_str):
     """
     Test that overconsumption occurs when cursor correctness is not requested.
 
     In that case, we do readahead buffering regardless of seekability to
     maximize performance.
+
+    Also tests that the remainder is correct in this case, which allows people
+    to build their own workarounds for the issue in Python if they so choose.
     """
     buf = to_bytes_or_str_buf(s)
     tokenizer = RustTokenizer(buf, False)
     for kind, val in tokenizer:
         if val == "}":
             break
-    tokenizer.park_cursor()
     assert len(buf.read()) == 0  # EOF => readahead buf read everything
+    assert tokenizer.remainder == to_bytes_or_str(s.split("}", maxsplit=1)[1])
