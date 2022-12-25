@@ -77,7 +77,20 @@ enum State {
     UnicodeSurrogate = 25,
 }
 
+/// A drop-in replacement for json-stream's JSON tokenizer, written in Rust.
+///
+/// Args:
+///   stream: Python file-like object / stream to read JSON from. Can be
+///     either in text mode or in binary mode (so long as the bytes are valid
+///     UTF-8).
+///   correct_cursor: Whether it is required that the cursor is left in the
+///     correct position (behind the last processed character) after
+///     park_cursor() has been called. If set to False, performance for
+///     unseekable streams is drastically improved at the cost of the cursor
+///     ending up in places unrelated to the actual tokenization progress. For
+///     seekable streams, the improvement shouldn't be noticable.
 #[pyclass]
+#[pyo3(text_signature = "(stream, correct_cursor=True)")]
 struct RustTokenizer {
     stream: Box<dyn SuitableStream + Send>,
     completed: bool,
@@ -230,6 +243,7 @@ impl RustTokenizer {
     /// processed, so the JSON parser can call it when it sees the end of the
     /// document has been reached and thereby allow reading the stream beyond
     /// it without skipping anything.
+    #[pyo3(text_signature = "($self)")]
     fn park_cursor(mut slf: PyRefMut<'_, Self>) -> PyResult<()> {
         if let Err(e) = slf.stream.park_cursor() {
             return Err(PyValueError::new_err(format!(
@@ -238,13 +252,17 @@ impl RustTokenizer {
         }
         Ok(())
     }
-    /// Bytes or chars (depending on stream type) that have been buffered but not yet procesed.
+    /// Bytes/string data that have been buffered but not yet processed.
     ///
-    /// This is provided as an alternative to park_cursor for unseekable yet buffered (for
-    /// performance) streams. In such cases, the cursor will be in a "wrong" position (namely at
-    /// the end of the block read ahead into the buffer) even after park_cursor() has been called,
-    /// so this feature allows users to write their own workarounds by obtaining the read-ahead
-    /// data.
+    /// The type (bytes or str) depends on the type of the data returned by
+    /// the underlying Python file-like object / stream.
+    ///
+    /// This is provided as an alternative to park_cursor for unseekable yet
+    /// buffered (for performance) streams. In such cases, the cursor will be
+    /// in a "wrong" position (namely at the end of the block read ahead into
+    /// the buffer) even after park_cursor() has been called, so this feature
+    /// allows users to write their own workarounds by obtaining the
+    /// read-ahead data.
     #[getter]
     fn remainder(slf: PyRefMut<'_, Self>) -> StreamData {
         slf.stream.remainder()
