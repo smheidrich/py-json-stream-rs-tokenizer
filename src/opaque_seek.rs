@@ -7,6 +7,7 @@ pub struct OpaqueSeekPos(pub u64);
 #[derive(Copy, Clone)]
 pub enum OpaqueSeekFrom {
     Start(OpaqueSeekPos),
+    #[allow(dead_code)] // to be honest I don't understand why this is dead code if it's public...
     End,
     Current,
 }
