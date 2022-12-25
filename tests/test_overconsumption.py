@@ -68,6 +68,9 @@ def test_overconsumption_load_ends_at_doc_end(
 def test_overconsumption_park_cursor_skip_3_chars_and_continue(
     s, expected_str_cursor_pos, expected_bytes_cursor_pos, to_bytes_or_str_buf
 ):
+    """
+    Principal regression test for overconsumption.
+    """
     buf = to_bytes_or_str_buf(s)
     tokenizer = RustTokenizer(buf)
     for kind, val in tokenizer:
@@ -82,3 +85,29 @@ def test_overconsumption_park_cursor_skip_3_chars_and_continue(
         assert False, "what"
     buf.read(3)  # skip ahead 3 chars
     assert "".join(str(val) for kind, val in tokenizer) == "{b:2}"
+
+
+@pytest.mark.parametrize(
+    "s",
+    [
+        ('{ "a": 1 } | { "b": 2 }'),
+        ('{"a": 1} | { "b": 2 }'),
+        ('{"a":1} | { "b": 2 }'),
+        ('{ "a":1, "b": 2, "c": 3, "d": 4, "xyz": 9 } | { "b": 2 }'),
+        ('{ "æ": [1, 2, 3, 4, 5 ], "ð": 4, "xyz": 9 } | { "b": 2 }'),
+    ],
+)
+def test_overconsumes_when_correct_cursor_disabled(s, to_bytes_or_str_buf):
+    """
+    Test that overconsumption occurs when cursor correctness is not requested.
+
+    In that case, we do readahead buffering regardless of seekability to
+    maximize performance.
+    """
+    buf = to_bytes_or_str_buf(s)
+    tokenizer = RustTokenizer(buf, False)
+    for kind, val in tokenizer:
+        if val == "}":
+            break
+    tokenizer.park_cursor()
+    assert len(buf.read()) == 0  # EOF => readahead buf read everything
