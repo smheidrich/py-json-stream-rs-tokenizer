@@ -24,6 +24,8 @@ mod read_string;
 mod remainder;
 mod suitable_seekable_buffered_bytes_stream;
 mod suitable_seekable_buffered_text_stream;
+mod suitable_unseekable_buffered_bytes_stream;
+mod suitable_unseekable_buffered_text_stream;
 mod suitable_stream;
 mod suitable_unbuffered_bytes_stream;
 mod suitable_unbuffered_text_stream;
@@ -109,9 +111,10 @@ impl From<ParseFloatError> for ParsingError {
 #[pymethods]
 impl RustTokenizer {
     #[new]
-    fn new(stream: PyObject) -> PyResult<Self> {
+    #[args(correct_cursor = "true")]
+    fn new(stream: PyObject, correct_cursor: bool) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: make_suitable_stream(stream)?,
+            stream: make_suitable_stream(stream, correct_cursor)?,
             completed: false,
             advance: true,
             token: String::new(),
