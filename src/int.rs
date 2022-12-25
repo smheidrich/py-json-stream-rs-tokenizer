@@ -35,9 +35,7 @@ impl FromStr for AppropriateInt {
     #[inline]
     fn from_str(s: &str) -> Result<AppropriateInt, ParseIntError> {
         match s.parse::<i64>() {
-            Ok(parsed_num) => {
-                Ok(AppropriateInt::Normal(parsed_num))
-            },
+            Ok(parsed_num) => Ok(AppropriateInt::Normal(parsed_num)),
             Err(e) if e.to_string().contains("number too") => {
                 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
                 match BigInt::from_str(s) {
@@ -47,9 +45,7 @@ impl FromStr for AppropriateInt {
                 #[cfg(any(Py_LIMITED_API, PyPy))]
                 Ok(AppropriateInt::Big(s.to_owned()))
             }
-            Err(e) => {
-                Err(ParseIntError::General(format!("{e:?}")))
-            }
+            Err(e) => Err(ParseIntError::General(format!("{e:?}"))),
         }
     }
 }
@@ -57,8 +53,8 @@ impl FromStr for AppropriateInt {
 impl IntoPy<PyObject> for AppropriateInt {
     fn into_py(self, py: Python<'_>) -> PyObject {
         match self {
-            AppropriateInt::Normal(num) => { num.into_py(py) },
-            AppropriateInt::Big(num) => { num.into_py(py) },
+            AppropriateInt::Normal(num) => num.into_py(py),
+            AppropriateInt::Big(num) => num.into_py(py),
         }
     }
 }
