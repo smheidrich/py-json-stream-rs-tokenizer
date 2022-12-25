@@ -239,6 +239,12 @@ impl RustTokenizer {
         Ok(())
     }
     /// Bytes or chars (depending on stream type) that have been buffered but not yet procesed.
+    ///
+    /// This is provided as an alternative to park_cursor for unseekable yet buffered (for
+    /// performance) streams. In such cases, the cursor will be in a "wrong" position (namely at
+    /// the end of the block read ahead into the buffer) even after park_cursor() has been called,
+    /// so this feature allows users to write their own workarounds by obtaining the read-ahead
+    /// data.
     #[getter]
     fn remainder(slf: PyRefMut<'_, Self>) -> StreamData {
         slf.stream.remainder()
