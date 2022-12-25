@@ -31,12 +31,12 @@ try:
         RustTokenizer = _RustTokenizer
     else:
 
-        def RustTokenizer(f):
+        def RustTokenizer(*args, **kwargs):
             """
             Rust tokenizer (fallback wrapper for integer conversion)
             """
             # x = (token_type, value) but {un&re}packing worsens performance
-            for x in _RustTokenizer(f):
+            for x in _RustTokenizer(*args, **kwargs):
                 if x[0] == TokenType.Number and isinstance(x[1], str):
                     # fallback required for large integers
                     yield (x[0], int(x[1]))
