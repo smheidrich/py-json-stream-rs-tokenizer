@@ -31,17 +31,32 @@ try:
         RustTokenizer = _RustTokenizer
     else:
 
-        def RustTokenizer(*args, **kwargs):
+        class RustTokenizer:
             """
             Rust tokenizer (fallback wrapper for integer conversion)
             """
-            # x = (token_type, value) but {un&re}packing worsens performance
-            for x in _RustTokenizer(*args, **kwargs):
+
+            def __init__(self, *args, **kwargs):
+                self.inner = _RustTokenizer(*args, **kwargs)
+
+            def __iter__(self):
+                return self
+
+            def __next__(self):
+                # x = (token_type, value) but {un&re}packing worsens perf
+                x = self.inner.__next__()
                 if x[0] == TokenType.Number and isinstance(x[1], str):
                     # fallback required for large integers
-                    yield (x[0], int(x[1]))
+                    return (x[0], int(x[1]))
                 else:
-                    yield x
+                    return x
+
+            @property
+            def remainder(self):
+                return self.inner.remainder
+
+            def park_cursor(self):
+                self.inner.park_cursor()
 
     __all__.extend(["RustTokenizer", "supports_bigint"])
 except ImportError:
@@ -96,7 +111,9 @@ def load(fp, persistent=False):
     """
     import json_stream
 
-    return json_stream.load(fp, persistent, tokenizer=rust_tokenizer_or_raise())
+    return json_stream.load(
+        fp, persistent, tokenizer=rust_tokenizer_or_raise()
+    )
 
 
 def visit(fp, visitor):
