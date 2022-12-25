@@ -10,6 +10,8 @@ use crate::suitable_seekable_buffered_bytes_stream::SuitableSeekableBufferedByte
 use crate::suitable_seekable_buffered_text_stream::SuitableSeekableBufferedTextStream;
 use crate::suitable_unbuffered_bytes_stream::SuitableUnbufferedBytesStream;
 use crate::suitable_unbuffered_text_stream::SuitableUnbufferedTextStream;
+use crate::suitable_unseekable_buffered_bytes_stream::SuitableUnseekableBufferedBytesStream;
+use crate::suitable_unseekable_buffered_text_stream::SuitableUnseekableBufferedTextStream;
 use pyo3::exceptions::PyTypeError;
 use pyo3::types::{PyBytes, PyString};
 use pyo3::{PyObject, PyResult, Python};
@@ -24,7 +26,10 @@ enum ReadReturnType {
     Other(String),
 }
 
-pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn SuitableStream + Send>> {
+pub fn make_suitable_stream(
+    stream: PyObject,
+    correct_cursor: bool,
+) -> PyResult<Box<dyn SuitableStream + Send>> {
     let read_return_type: ReadReturnType = Python::with_gil(|py| -> PyResult<ReadReturnType> {
         let read_result = stream.as_ref(py).call_method1("read", (0,))?;
         if read_result.is_instance_of::<PyString>()? {
@@ -44,18 +49,26 @@ pub fn make_suitable_stream(stream: PyObject) -> PyResult<Box<dyn SuitableStream
     match read_return_type {
         ReadReturnType::String => {
             let py_text_stream = PyTextStream::new(stream);
-            Ok(if seekable {
-                Box::new(SuitableSeekableBufferedTextStream::new(py_text_stream))
+            Ok(if correct_cursor {
+                if seekable {
+                    Box::new(SuitableSeekableBufferedTextStream::new(py_text_stream))
+                } else {
+                    Box::new(SuitableUnbufferedTextStream::new(py_text_stream))
+                }
             } else {
-                Box::new(SuitableUnbufferedTextStream::new(py_text_stream))
+                Box::new(SuitableUnseekableBufferedTextStream::new(py_text_stream))
             })
         }
         ReadReturnType::Bytes => {
             let py_bytes_stream = PyBytesStream::new(stream);
-            Ok(if seekable {
-                Box::new(SuitableSeekableBufferedBytesStream::new(py_bytes_stream))
+            Ok(if correct_cursor {
+                if seekable {
+                    Box::new(SuitableSeekableBufferedBytesStream::new(py_bytes_stream))
+                } else {
+                    Box::new(SuitableUnbufferedBytesStream::new(py_bytes_stream))
+                }
             } else {
-                Box::new(SuitableUnbufferedBytesStream::new(py_bytes_stream))
+                Box::new(SuitableUnseekableBufferedBytesStream::new(py_bytes_stream))
             })
         }
         ReadReturnType::Other(t) => Err(PyTypeError::new_err(format!(
