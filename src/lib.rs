@@ -8,15 +8,19 @@ use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
 use std::borrow::BorrowMut;
-use std::num::ParseFloatError;
 use std::io::BufRead;
 use std::io::BufReader;
+use std::num::ParseFloatError;
 use thiserror::Error;
 use utf8_chars::BufReadCharsExt;
 
 mod int;
 use crate::int::{AppropriateInt, ParseIntError};
 use std::str::FromStr;
+
+mod char_or_eof;
+use crate::char_or_eof::CharOrEof;
+use CharOrEof::{Char, Eof};
 
 #[derive(Clone)]
 enum TokenType {
@@ -69,8 +73,11 @@ struct RustTokenizer {
     charcode: u32,
 }
 
-fn is_delimiter(c: char) -> bool {
-    c.is_whitespace() || "{}[]:,".contains(c)
+fn is_delimiter(c: CharOrEof) -> bool {
+    match c {
+        Char(c_) => c_.is_whitespace() || "{}[]:,".contains(c_),
+        Eof => true,
+    }
 }
 
 impl IntoPy<PyObject> for TokenType {
@@ -100,11 +107,9 @@ impl RustTokenizer {
     #[new]
     fn new(stream: PyObject) -> PyResult<Self> {
         Ok(RustTokenizer {
-            stream: Box::new(BufReader::new(
-                PyFileLikeObject::with_requirements(
-                    stream, true, false, false,
-                )?,
-            )),
+            stream: Box::new(BufReader::new(PyFileLikeObject::with_requirements(
+                stream, true, false, false,
+            )?)),
             completed: false,
             advance: true,
             token: String::new(),
@@ -141,16 +146,14 @@ impl RustTokenizer {
             }
             match slf.c {
                 Some(c) => {
-                    match RustTokenizer::process_char(slf.borrow_mut(), py, c) {
+                    match RustTokenizer::process_char(slf.borrow_mut(), py, Char(c)) {
                         Ok(tok) => {
                             now_token = tok;
                             slf.state = slf.next_state.clone();
                         }
                         Err(e) => {
                             let index = slf.index;
-                            return Err(PyValueError::new_err(format!(
-                                "{e} at index {index}"
-                            )));
+                            return Err(PyValueError::new_err(format!("{e} at index {index}")));
                         }
                     }
                     if slf.completed {
@@ -165,13 +168,13 @@ impl RustTokenizer {
                 }
             }
         }
-        match RustTokenizer::process_char(slf.borrow_mut(), py, ' ') {
-            Ok(tok) => { now_token = tok; },
+        match RustTokenizer::process_char(slf.borrow_mut(), py, Eof) {
+            Ok(tok) => {
+                now_token = tok;
+            }
             Err(e) => {
                 let index = slf.index;
-                return Err(PyValueError::new_err(format!(
-                    "{e} at index {index}"
-                )));
+                return Err(PyValueError::new_err(format!("{e} at index {index}")));
             }
         }
         if slf.completed {
@@ -198,7 +201,7 @@ impl RustTokenizer {
     fn process_char<'a>(
         slf: &mut Self,
         py: Python<'_>,
-        c: char,
+        c: CharOrEof,
     ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
         slf.advance = true;
         slf.next_state = slf.state.clone();
@@ -208,77 +211,72 @@ impl RustTokenizer {
 
         match slf.state {
             State::Whitespace => match c {
-                '{' => {
+                Char('{') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("{".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("{".into_py(py))));
                 }
-                '}' => {
+                Char('}') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("}".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("}".into_py(py))));
                 }
-                '[' => {
+                Char('[') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("[".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("[".into_py(py))));
                 }
-                ']' => {
+                Char(']') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some("]".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some("]".into_py(py))));
                 }
-                ',' => {
+                Char(',') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some(",".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some(",".into_py(py))));
                 }
-                ':' => {
+                Char(':') => {
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Operator, Some(":".into_py(py))));
+                    now_token = Some((TokenType::Operator, Some(":".into_py(py))));
                 }
-                '"' => {
+                Char('"') => {
                     slf.next_state = State::String_;
                 }
-                '1'..='9' => {
+                Char('1'..='9') => {
                     slf.next_state = State::Integer;
                     add_char = true;
                 }
-                '0' => {
+                Char('0') => {
                     slf.next_state = State::Integer0;
                     add_char = true;
                 }
-                '-' => {
+                Char('-') => {
                     slf.next_state = State::IntegerSign;
                     add_char = true;
                 }
-                'f' => {
+                Char('f') => {
                     slf.next_state = State::False1;
                 }
-                't' => {
+                Char('t') => {
                     slf.next_state = State::True1;
                 }
-                'n' => {
+                Char('n') => {
                     slf.next_state = State::Null1;
                 }
-                _ => {
-                    if !c.is_whitespace() {
+                Char(c_) => {
+                    if !c_.is_whitespace() {
                         return Err(ParsingError::InvalidJson(format!(
                             "Invalid JSON character: {c:?}"
                         )));
                     }
-                }
+                },
+                Eof => (),
             },
             State::Integer => match c {
-                '0'..='9' => {
+                Char('0'..='9') => {
                     add_char = true;
                 }
-                '.' => {
+                Char('.') => {
                     slf.next_state = State::FloatingPoint0;
                     add_char = true;
                 }
-                'e' | 'E' => {
+                Char('e' | 'E') => {
                     slf.next_state = State::IntegerExp0;
                     add_char = true;
                 }
@@ -287,10 +285,7 @@ impl RustTokenizer {
                     slf.completed = true;
                     match AppropriateInt::from_str(&slf.token) {
                         Ok(parsed_num) => {
-                            now_token = Some((
-                                TokenType::Number,
-                                Some(parsed_num.into_py(py))
-                            ));
+                            now_token = Some((TokenType::Number, Some(parsed_num.into_py(py))));
                         }
                         Err(ParseIntError::General(e)) => {
                             return Err(ParsingError::InvalidJson(format!(
@@ -312,11 +307,11 @@ impl RustTokenizer {
                 }
             },
             State::Integer0 => match c {
-                '.' => {
+                Char('.') => {
                     slf.next_state = State::FloatingPoint0;
                     add_char = true;
                 }
-                'e' | 'E' => {
+                Char('e' | 'E') => {
                     slf.next_state = State::IntegerExp0;
                     add_char = true;
                 }
@@ -333,22 +328,22 @@ impl RustTokenizer {
                 }
             },
             State::IntegerSign => match c {
-                '0' => {
+                Char('0') => {
                     slf.next_state = State::Integer0;
                     add_char = true;
                 }
-                '1'..='9' => {
+                Char('1'..='9') => {
                     slf.next_state = State::Integer;
                     add_char = true;
                 }
-                _ => {
+                c_ => {
                     return Err(ParsingError::InvalidJson(format!(
-                        "A - must be followed by a digit.  Got {c:?}"
+                        "A - must be followed by a digit.  Got {c_:?}"
                     )));
                 }
             },
             State::IntegerExp0 => match c {
-                '+' | '-' | '0'..='9' => {
+                Char('+' | '-' | '0'..='9') => {
                     slf.next_state = State::IntegerExp;
                     add_char = true;
                 }
@@ -359,7 +354,7 @@ impl RustTokenizer {
                 }
             },
             State::IntegerExp => match c {
-                '0'..='9' => {
+                Char('0'..='9') => {
                     add_char = true;
                 }
                 _ if is_delimiter(c) => {
@@ -378,10 +373,10 @@ impl RustTokenizer {
                 }
             },
             State::FloatingPoint => match c {
-                '0'..='9' => {
+                Char('0'..='9') => {
                     add_char = true;
                 }
-                'e' | 'E' => {
+                Char('e' | 'E') => {
                     slf.next_state = State::IntegerExp0;
                     add_char = true;
                 }
@@ -401,7 +396,7 @@ impl RustTokenizer {
                 }
             },
             State::FloatingPoint0 => match c {
-                '0'..='9' => {
+                Char('0'..='9') => {
                     slf.next_state = State::FloatingPoint;
                     add_char = true;
                 }
@@ -412,7 +407,7 @@ impl RustTokenizer {
                 }
             },
             State::False1 => match c {
-                'a' => {
+                Char('a') => {
                     slf.next_state = State::False2;
                 }
                 _ => {
@@ -422,7 +417,7 @@ impl RustTokenizer {
                 }
             },
             State::False2 => match c {
-                'l' => {
+                Char('l') => {
                     slf.next_state = State::False3;
                 }
                 _ => {
@@ -432,7 +427,7 @@ impl RustTokenizer {
                 }
             },
             State::False3 => match c {
-                's' => {
+                Char('s') => {
                     slf.next_state = State::False4;
                 }
                 _ => {
@@ -442,11 +437,10 @@ impl RustTokenizer {
                 }
             },
             State::False4 => match c {
-                'e' => {
+                Char('e') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Boolean, Some(false.into_py(py))));
+                    now_token = Some((TokenType::Boolean, Some(false.into_py(py))));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -455,7 +449,7 @@ impl RustTokenizer {
                 }
             },
             State::True1 => match c {
-                'r' => {
+                Char('r') => {
                     slf.next_state = State::True2;
                 }
                 _ => {
@@ -465,7 +459,7 @@ impl RustTokenizer {
                 }
             },
             State::True2 => match c {
-                'u' => {
+                Char('u') => {
                     slf.next_state = State::True3;
                 }
                 _ => {
@@ -475,11 +469,10 @@ impl RustTokenizer {
                 }
             },
             State::True3 => match c {
-                'e' => {
+                Char('e') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token =
-                        Some((TokenType::Boolean, Some(true.into_py(py))));
+                    now_token = Some((TokenType::Boolean, Some(true.into_py(py))));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -488,7 +481,7 @@ impl RustTokenizer {
                 }
             },
             State::Null1 => match c {
-                'u' => {
+                Char('u') => {
                     slf.next_state = State::Null2;
                 }
                 _ => {
@@ -498,7 +491,7 @@ impl RustTokenizer {
                 }
             },
             State::Null2 => match c {
-                'l' => {
+                Char('l') => {
                     slf.next_state = State::Null3;
                 }
                 _ => {
@@ -508,7 +501,7 @@ impl RustTokenizer {
                 }
             },
             State::Null3 => match c {
-                'l' => {
+                Char('l') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
                     now_token = Some((TokenType::Null, None));
@@ -520,16 +513,18 @@ impl RustTokenizer {
                 }
             },
             State::String_ => match c {
-                '\"' => {
+                Char('\"') => {
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::String_,
-                        Some(slf.token.clone().into_py(py)),
-                    ));
+                    now_token = Some((TokenType::String_, Some(slf.token.clone().into_py(py))));
                     slf.next_state = State::StringEnd;
                 }
-                '\\' => {
+                Char('\\') => {
                     slf.next_state = State::StringEscape;
+                }
+                Eof => {
+                    return Err(ParsingError::InvalidJson(
+                        "Unterminated string at end of file".to_string(),
+                    ));
                 }
                 _ => {
                     add_char = true;
@@ -548,34 +543,34 @@ impl RustTokenizer {
             State::StringEscape => {
                 slf.next_state = State::String_;
                 match c {
-                    '\\' | '\"' => {
+                    Char('\\' | '\"') => {
                         add_char = true;
                     }
-                    'b' => {
-                        c = 8u8 as char;
+                    Char('b') => {
+                        c = Char(8u8 as char);
                         add_char = true;
                     }
-                    'f' => {
-                        c = 12u8 as char;
+                    Char('f') => {
+                        c = Char(12u8 as char);
                         add_char = true;
                     }
-                    'n' => {
-                        c = '\n';
+                    Char('n') => {
+                        c = Char('\n');
                         add_char = true;
                     }
-                    't' => {
-                        c = '\t';
+                    Char('t') => {
+                        c = Char('\t');
                         add_char = true;
                     }
-                    'r' => {
-                        c = '\r';
+                    Char('r') => {
+                        c = Char('\r');
                         add_char = true;
                     }
-                    '/' => {
-                        c = '/';
+                    Char('/') => {
+                        c = Char('/');
                         add_char = true;
                     }
-                    'u' => {
+                    Char('u') => {
                         slf.next_state = State::Unicode1;
                         slf.charcode = 0;
                     }
@@ -588,14 +583,14 @@ impl RustTokenizer {
             }
             State::Unicode1 => {
                 match c {
-                    '0'..='9' => {
-                        slf.charcode = (c as u32 - 48) * 4096;
+                    Char(c_ @ '0'..='9') => {
+                        slf.charcode = (c_ as u32 - 48) * 4096;
                     }
-                    'a'..='f' => {
-                        slf.charcode = (c as u32 - 87) * 4096;
+                    Char(c_ @ 'a'..='f') => {
+                        slf.charcode = (c_ as u32 - 87) * 4096;
                     }
-                    'A'..='F' => {
-                        slf.charcode = (c as u32 - 55) * 4096;
+                    Char(c_ @ 'A'..='F') => {
+                        slf.charcode = (c_ as u32 - 55) * 4096;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -607,14 +602,14 @@ impl RustTokenizer {
             }
             State::Unicode2 => {
                 match c {
-                    '0'..='9' => {
-                        slf.charcode += (c as u32 - 48) * 256;
+                    Char(c_ @ '0'..='9') => {
+                        slf.charcode += (c_ as u32 - 48) * 256;
                     }
-                    'a'..='f' => {
-                        slf.charcode += (c as u32 - 87) * 256;
+                    Char(c_ @ 'a'..='f') => {
+                        slf.charcode += (c_ as u32 - 87) * 256;
                     }
-                    'A'..='F' => {
-                        slf.charcode += (c as u32 - 55) * 256;
+                    Char(c_ @ 'A'..='F') => {
+                        slf.charcode += (c_ as u32 - 55) * 256;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -626,14 +621,14 @@ impl RustTokenizer {
             }
             State::Unicode3 => {
                 match c {
-                    '0'..='9' => {
-                        slf.charcode += (c as u32 - 48) * 16;
+                    Char(c_ @ '0'..='9') => {
+                        slf.charcode += (c_ as u32 - 48) * 16;
                     }
-                    'a'..='f' => {
-                        slf.charcode += (c as u32 - 87) * 16;
+                    Char(c_ @ 'a'..='f') => {
+                        slf.charcode += (c_ as u32 - 87) * 16;
                     }
-                    'A'..='F' => {
-                        slf.charcode += (c as u32 - 55) * 16;
+                    Char(c_ @ 'A'..='F') => {
+                        slf.charcode += (c_ as u32 - 55) * 16;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -645,14 +640,14 @@ impl RustTokenizer {
             }
             State::Unicode4 => {
                 match c {
-                    '0'..='9' => {
-                        slf.charcode += c as u32 - 48;
+                    Char(c_ @ '0'..='9') => {
+                        slf.charcode += c_ as u32 - 48;
                     }
-                    'a'..='f' => {
-                        slf.charcode += c as u32 - 87;
+                    Char(c_ @ 'a'..='f') => {
+                        slf.charcode += c_ as u32 - 87;
                     }
-                    'A'..='F' => {
-                        slf.charcode += c as u32 - 55;
+                    Char(c_ @ 'A'..='F') => {
+                        slf.charcode += c_ as u32 - 55;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -663,7 +658,7 @@ impl RustTokenizer {
                 slf.next_state = State::String_;
                 match char::from_u32(slf.charcode) {
                     Some(unicode_char) => {
-                        c = unicode_char;
+                        c = Char(unicode_char);
                     }
                     None => {
                         let charcode = slf.charcode;
@@ -677,7 +672,9 @@ impl RustTokenizer {
         }
 
         if add_char {
-            slf.token.push(c);
+            if let Char(c_) = c {
+                slf.token.push(c_);
+            }
         };
 
         Ok(now_token)
