@@ -70,7 +70,7 @@ struct RustTokenizer {
     next_state: State,
     index: i64,
     c: Option<char>,
-    charcode: u32,
+    charcode: u16,
 }
 
 fn is_delimiter(c: CharOrEof) -> bool {
@@ -584,13 +584,13 @@ impl RustTokenizer {
             State::Unicode1 => {
                 match c {
                     Char(c_ @ '0'..='9') => {
-                        slf.charcode = (c_ as u32 - 48) * 4096;
+                        slf.charcode = (c_ as u16 - 48) * 4096;
                     }
                     Char(c_ @ 'a'..='f') => {
-                        slf.charcode = (c_ as u32 - 87) * 4096;
+                        slf.charcode = (c_ as u16 - 87) * 4096;
                     }
                     Char(c_ @ 'A'..='F') => {
-                        slf.charcode = (c_ as u32 - 55) * 4096;
+                        slf.charcode = (c_ as u16 - 55) * 4096;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -603,13 +603,13 @@ impl RustTokenizer {
             State::Unicode2 => {
                 match c {
                     Char(c_ @ '0'..='9') => {
-                        slf.charcode += (c_ as u32 - 48) * 256;
+                        slf.charcode += (c_ as u16 - 48) * 256;
                     }
                     Char(c_ @ 'a'..='f') => {
-                        slf.charcode += (c_ as u32 - 87) * 256;
+                        slf.charcode += (c_ as u16 - 87) * 256;
                     }
                     Char(c_ @ 'A'..='F') => {
-                        slf.charcode += (c_ as u32 - 55) * 256;
+                        slf.charcode += (c_ as u16 - 55) * 256;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -622,13 +622,13 @@ impl RustTokenizer {
             State::Unicode3 => {
                 match c {
                     Char(c_ @ '0'..='9') => {
-                        slf.charcode += (c_ as u32 - 48) * 16;
+                        slf.charcode += (c_ as u16 - 48) * 16;
                     }
                     Char(c_ @ 'a'..='f') => {
-                        slf.charcode += (c_ as u32 - 87) * 16;
+                        slf.charcode += (c_ as u16 - 87) * 16;
                     }
                     Char(c_ @ 'A'..='F') => {
-                        slf.charcode += (c_ as u32 - 55) * 16;
+                        slf.charcode += (c_ as u16 - 55) * 16;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -641,13 +641,13 @@ impl RustTokenizer {
             State::Unicode4 => {
                 match c {
                     Char(c_ @ '0'..='9') => {
-                        slf.charcode += c_ as u32 - 48;
+                        slf.charcode += c_ as u16 - 48;
                     }
                     Char(c_ @ 'a'..='f') => {
-                        slf.charcode += c_ as u32 - 87;
+                        slf.charcode += c_ as u16 - 87;
                     }
                     Char(c_ @ 'A'..='F') => {
-                        slf.charcode += c_ as u32 - 55;
+                        slf.charcode += c_ as u16 - 55;
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
@@ -656,7 +656,7 @@ impl RustTokenizer {
                     }
                 }
                 slf.next_state = State::String_;
-                match char::from_u32(slf.charcode) {
+                match char::from_u32(slf.charcode as u32) {
                     Some(unicode_char) => {
                         c = Char(unicode_char);
                     }
