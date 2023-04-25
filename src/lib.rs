@@ -22,6 +22,9 @@ mod char_or_eof;
 use crate::char_or_eof::CharOrEof;
 use CharOrEof::{Char, Eof};
 
+mod unicode_utils;
+use crate::unicode_utils::{is_surrogate, decode_surrogate_pair, UnicodeError};
+
 #[derive(Clone)]
 enum TokenType {
     Operator = 0,
@@ -58,6 +61,8 @@ enum State {
     Unicode2 = 23,
     Unicode3 = 24,
     Unicode4 = 25,
+    UnicodeSurrogatePairHalf2Char1 = 26,
+    UnicodeSurrogatePairHalf2Char2 = 27,
 }
 
 #[pyclass]
@@ -71,6 +76,7 @@ struct RustTokenizer {
     index: i64,
     c: Option<char>,
     charcode: u16,
+    prev_charcode: Option<u16>, // first half of a Unicode surrogate pair
 }
 
 fn is_delimiter(c: CharOrEof) -> bool {
@@ -102,6 +108,12 @@ impl From<ParseFloatError> for ParsingError {
     }
 }
 
+impl From<UnicodeError> for ParsingError {
+    fn from(e: UnicodeError) -> ParsingError {
+        ParsingError::InvalidJson(format!("error parsing unicode: {e}"))
+    }
+}
+
 #[pymethods]
 impl RustTokenizer {
     #[new]
@@ -118,6 +130,7 @@ impl RustTokenizer {
             index: -1,
             c: None,
             charcode: 0,
+            prev_charcode: None,
         })
     }
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
@@ -656,19 +669,61 @@ impl RustTokenizer {
                     }
                 }
                 slf.next_state = State::String_;
-                match char::from_u32(slf.charcode as u32) {
-                    Some(unicode_char) => {
-                        c = Char(unicode_char);
-                    }
-                    None => {
-                        let charcode = slf.charcode;
+                let charcode = slf.charcode;
+                if let Some(surrogate_half1) = slf.prev_charcode {
+                    if is_surrogate(charcode) {
+                        c = Char(
+                            decode_surrogate_pair(surrogate_half1, charcode)
+                            .map_err(ParsingError::from)?
+                        );
+                        slf.prev_charcode = None;
+                        add_char = true;
+                    } else {
                         return Err(ParsingError::InvalidJson(format!(
-                            "No unicode character for code: {charcode}"
+                            "Expected 2nd half of surrogate pair but got code {charcode}"
                         )));
                     }
+                } else {
+                    match char::from_u32(charcode as u32) {
+                        Some(unicode_char) => {
+                            c = Char(unicode_char);
+                            add_char = true;
+                        }
+                        None if is_surrogate(charcode) => {
+                            slf.prev_charcode = Some(charcode);
+                            slf.next_state = State::UnicodeSurrogatePairHalf2Char1;
+                        }
+                        None => {
+                            return Err(ParsingError::InvalidJson(format!(
+                                "No unicode character for code: {charcode}"
+                            )));
+                        }
+                    }
                 }
-                add_char = true;
-            }
+            },
+            State::UnicodeSurrogatePairHalf2Char1 => match c {
+                Char('\\') => {
+                    slf.next_state = State::UnicodeSurrogatePairHalf2Char2;
+                },
+                _ => {
+                    return Err(ParsingError::InvalidJson(
+                        format!("Expected '\\' of '\\uXXXX' sequence for second half of \
+                                 Unicode surrogate pair escape sequence")
+                    ));
+                }
+            },
+            State::UnicodeSurrogatePairHalf2Char2 => match c {
+                Char('u') => {
+                    slf.next_state = State::Unicode1;
+                    slf.charcode = 0;
+                },
+                _ => {
+                    return Err(ParsingError::InvalidJson(
+                        format!("Expected 'u' of '\\uXXXX' sequence for second half of \
+                                 Unicode surrogate pair escape sequence")
+                    ));
+                }
+            },
         }
 
         if add_char {

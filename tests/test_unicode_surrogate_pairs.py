@@ -5,7 +5,6 @@ import pytest
 from json_stream_rs_tokenizer import load
 
 
-@pytest.mark.xfail(strict=True)
 @pytest.mark.parametrize(
     "s,expected",
     [
@@ -18,7 +17,6 @@ def test_unicode_surrogate_pairs(s, expected):
     assert list(load(StringIO(f'["{s}"]'))) == [expected]
 
 
-@pytest.mark.xfail(strict=True)
 @pytest.mark.parametrize(
     "s",
     [
