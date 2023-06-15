@@ -1,0 +1,37 @@
+version: 2
+
+jobs:
+  linux-aarch64-wheels:
+    working_directory: ~/linux-aarch64-wheels
+    machine:
+      image: ubuntu-2004:2022.04.1
+    # resource_class is what tells CircleCI to use an ARM worker for native arm builds
+    # https://circleci.com/product/features/resource-classes/
+    resource_class: arm.medium
+    steps:
+      - checkout
+      - run:
+          name: Build the Linux aarch64 wheels.
+          environment:
+            CIBW_BEFORE_BUILD_LINUX: >
+              curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            CIBW_ENVIRONMENT_LINUX: >
+              PATH="$HOME/.cargo/bin:$PATH"
+            TWINE_USERNAME: __token__
+          command: |
+            # install deps
+            python3 -m pip install --user cibuildwheel==2.13.1 twine
+            # build wheels
+            python3 -m cibuildwheel --output-dir wheelhouse
+            # upload wheels to PyPI
+            if [[ "$CIRCLE_TAG" =~ v[0-9.]+ ]]; then
+              python3 -m twine upload wheelhouse/*.whl
+            fi
+      - store_artifacts:
+          path: wheelhouse/
+
+workflows:
+  version: 2
+  all-tests:
+    jobs:
+      - linux-aarch64-wheels
