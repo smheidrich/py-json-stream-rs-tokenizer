@@ -42,6 +42,8 @@ setup(
         "test": [
             "pytest>7.1,<8",
             "json-stream-rs-tokenizer[benchmark]",
+            # TODO relax upper limit once surrogate tests are fixed
+            "json-stream>=1,<2.3.1",
         ],
     },
     classifiers=[
