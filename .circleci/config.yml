@@ -34,4 +34,7 @@ workflows:
   version: 2
   all-tests:
     jobs:
-      - linux-aarch64-wheels
+      - linux-aarch64-wheels:
+          filters:
+            tags:
+              only: /^v.*/
