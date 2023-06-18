@@ -37,7 +37,7 @@ setup(
             "tqdm>=4.64,<5",
             "contexttimer>=0.3,<0.4",
             "si-prefix>=1.2,<2",
-            "typer>=0.6,<0.7",
+            "typer>=0.9,<0.10",
         ],
         "test": [
             "pytest>7.1,<8",
