@@ -66,6 +66,7 @@ jobs:
             HOST_HOME_DIR_UNIX="/host/${{ env.OUTER_HOME }}"
             CARGO_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.cargo"
             RUSTUP_HOME_UNIX="/host/${{ env.OUTER_HOME }}/.rustup"
+            CARGO_TARGET_DIR_UNIX="/host/${{ env.OUTER_HOME }}/target"
           CIBW_ENVIRONMENT_MACOS: >
             HOST_HOME_DIR="$HOME"
             HOST_PROJ_DIR="$GITHUB_WORKSPACE"
@@ -78,6 +79,7 @@ jobs:
             HOST_HOME_DIR_UNIX="$HOME"
             CARGO_HOME_UNIX="$HOME/.cargo"
             RUSTUP_HOME_UNIX="$HOME/.rustup"
+            CARGO_TARGET_DIR_UNIX="$HOME/target"
           CIBW_ENVIRONMENT_WINDOWS: >
             HOST_HOME_DIR="$HOME"
             HOST_PROJ_DIR="$GITHUB_WORKSPACE"
@@ -90,6 +92,7 @@ jobs:
             HOST_HOME_DIR_UNIX="${{ env.OUTER_HOME }}"
             CARGO_HOME_UNIX="${{ env.OUTER_HOME }}/.cargo"
             RUSTUP_HOME_UNIX="${{ env.OUTER_HOME }}/.rustup"
+            CARGO_TARGET_DIR_UNIX="${ env.OUTER_HOME }}/target"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD_LINUX: >
             bash $PROJ_DIR/ci-utils/before-build-linux.sh
