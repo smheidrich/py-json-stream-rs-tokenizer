@@ -16,7 +16,7 @@ thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 
 [build-dependencies]
-pyo3-build-config = { version = "0.17.1", features = ["resolve-config"] }
+pyo3-build-config = { version = "= 0.16.6", features = ["resolve-config"] }
 
 [patch.crates-io.pyo3-file]
 git = 'https://github.com/smheidrich/pyo3-file.git'
