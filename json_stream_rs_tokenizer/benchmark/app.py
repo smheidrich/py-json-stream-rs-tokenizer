@@ -31,7 +31,7 @@ def main(json_bytes=2e6):
             f"generated random json {random_json_file_path} "
             f"with size {random_json_size:.3e} bytes"
         )
-        random_json_file_path.write_text(random_json_str)
+        random_json_file_path.write_text(random_json_str, encoding="utf-8")
         results = {"python": {}, "rust": {}, "non-streaming": {}}
         for tokenizer_type, load_fn in shuffled(
             [
@@ -42,7 +42,7 @@ def main(json_bytes=2e6):
         ):
             print(f"running with {tokenizer_type} tokenizer")
             with Timer() as t:
-                with random_json_file_path.open() as f:
+                with random_json_file_path.open(encoding="utf-8") as f:
                     l = load_fn(f)
                     parsed = [to_standard_types(x) for x in tqdm(l, total=100)]
             print(f"{tokenizer_type} time: {t.elapsed:.2f} s")
