@@ -37,6 +37,8 @@ def test_invalid_number_starting_with_zero():
 def test_invalid_character_code():
     with pytest.raises(
         ValueError,
-        match=re.escape("Invalid character code: 'z' at index 3"),
+        match=re.escape(
+            "Unterminated unicode literal at end of file at index 5"
+        ),
     ):
         list(load(StringIO(r'"\uz"')))
