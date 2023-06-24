@@ -4,6 +4,7 @@
 /// json-stream's tokenizer was originally taken from the NAYA project.
 /// https://github.com/danielyule/naya
 /// Copyright (c) 2019 Daniel Yule
+use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use pyo3_file::PyFileLikeObject;
@@ -57,12 +58,10 @@ enum State {
     Null1 = 19,
     Null2 = 20,
     Null3 = 21,
-    Unicode1 = 22,
-    Unicode2 = 23,
-    Unicode3 = 24,
-    Unicode4 = 25,
-    UnicodeSurrogatePairHalf2Char1 = 26,
-    UnicodeSurrogatePairHalf2Char2 = 27,
+    Unicode = 22,
+    UnicodeSurrogateStart = 23,
+    UnicodeSurrogateStringEscape = 24,
+    UnicodeSurrogate = 25,
 }
 
 #[pyclass]
@@ -75,7 +74,7 @@ struct RustTokenizer {
     next_state: State,
     index: i64,
     c: Option<char>,
-    charcode: u16,
+    unicode_buffer: CompactString,
     prev_charcode: Option<u16>, // first half of a Unicode surrogate pair
 }
 
@@ -129,7 +128,7 @@ impl RustTokenizer {
             next_state: State::Whitespace,
             index: -1,
             c: None,
-            charcode: 0,
+            unicode_buffer: CompactString::with_capacity(4),
             prev_charcode: None,
         })
     }
@@ -584,146 +583,132 @@ impl RustTokenizer {
                         add_char = true;
                     }
                     Char('u') => {
-                        slf.next_state = State::Unicode1;
-                        slf.charcode = 0;
+                        slf.next_state = State::Unicode;
+                        slf.unicode_buffer = CompactString::with_capacity(4);
                     }
                     _ => {
                         return Err(ParsingError::InvalidJson(format!(
-                            "Invalid string escape: {c:?}"
+                            "Invalid string escape: {c}"
                         )));
                     }
                 }
             }
-            State::Unicode1 => {
+            State::Unicode => {
                 match c {
-                    Char(c_ @ '0'..='9') => {
-                        slf.charcode = (c_ as u16 - 48) * 4096;
+                    Char(c) => {
+                        slf.unicode_buffer.push(c);
                     }
-                    Char(c_ @ 'a'..='f') => {
-                        slf.charcode = (c_ as u16 - 87) * 4096;
-                    }
-                    Char(c_ @ 'A'..='F') => {
-                        slf.charcode = (c_ as u16 - 55) * 4096;
-                    }
-                    _ => {
+                    Eof => {
                         return Err(ParsingError::InvalidJson(format!(
-                            "Invalid character code: {c:?}"
+                            "Unterminated unicode literal at end of file"
                         )));
                     }
                 }
-                slf.next_state = State::Unicode2;
-            }
-            State::Unicode2 => {
-                match c {
-                    Char(c_ @ '0'..='9') => {
-                        slf.charcode += (c_ as u16 - 48) * 256;
-                    }
-                    Char(c_ @ 'a'..='f') => {
-                        slf.charcode += (c_ as u16 - 87) * 256;
-                    }
-                    Char(c_ @ 'A'..='F') => {
-                        slf.charcode += (c_ as u16 - 55) * 256;
-                    }
-                    _ => {
+                if slf.unicode_buffer.len() == 4 {
+                    let Ok(charcode) = u16::from_str_radix(
+                        slf.unicode_buffer.as_str(), 16
+                    ) else {
+                        let unicode_buffer = slf.unicode_buffer.as_str();
                         return Err(ParsingError::InvalidJson(format!(
-                            "Invalid character code: {c:?}"
+                            "Invalid unicode literal: \\u{unicode_buffer}"
                         )));
-                    }
-                }
-                slf.next_state = State::Unicode3;
-            }
-            State::Unicode3 => {
-                match c {
-                    Char(c_ @ '0'..='9') => {
-                        slf.charcode += (c_ as u16 - 48) * 16;
-                    }
-                    Char(c_ @ 'a'..='f') => {
-                        slf.charcode += (c_ as u16 - 87) * 16;
-                    }
-                    Char(c_ @ 'A'..='F') => {
-                        slf.charcode += (c_ as u16 - 55) * 16;
-                    }
-                    _ => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Invalid character code: {c:?}"
-                        )));
-                    }
-                }
-                slf.next_state = State::Unicode4;
-            }
-            State::Unicode4 => {
-                match c {
-                    Char(c_ @ '0'..='9') => {
-                        slf.charcode += c_ as u16 - 48;
-                    }
-                    Char(c_ @ 'a'..='f') => {
-                        slf.charcode += c_ as u16 - 87;
-                    }
-                    Char(c_ @ 'A'..='F') => {
-                        slf.charcode += c_ as u16 - 55;
-                    }
-                    _ => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Invalid character code: {c:?}"
-                        )));
-                    }
-                }
-                slf.next_state = State::String_;
-                let charcode = slf.charcode;
-                if let Some(surrogate_half1) = slf.prev_charcode {
-                    if is_surrogate(charcode) {
-                        c = Char(
-                            decode_surrogate_pair(surrogate_half1, charcode)
-                            .map_err(ParsingError::from)?
-                        );
-                        slf.prev_charcode = None;
-                        add_char = true;
-                    } else {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Expected 2nd half of surrogate pair but got code {charcode}"
-                        )));
-                    }
-                } else {
+                    };
                     match char::from_u32(charcode as u32) {
                         Some(unicode_char) => {
                             c = Char(unicode_char);
                             add_char = true;
+                            slf.next_state = State::String_;
                         }
                         None if is_surrogate(charcode) => {
                             slf.prev_charcode = Some(charcode);
-                            slf.next_state = State::UnicodeSurrogatePairHalf2Char1;
+                            slf.next_state = State::UnicodeSurrogateStart;
                         }
                         None => {
+                            // should never happen
                             return Err(ParsingError::InvalidJson(format!(
                                 "No unicode character for code: {charcode}"
                             )));
                         }
                     }
                 }
-            },
-            State::UnicodeSurrogatePairHalf2Char1 => match c {
-                Char('\\') => {
-                    slf.next_state = State::UnicodeSurrogatePairHalf2Char2;
-                },
-                _ => {
-                    return Err(ParsingError::InvalidJson(
-                        format!("Expected '\\' of '\\uXXXX' sequence for second half of \
-                                 Unicode surrogate pair escape sequence")
-                    ));
+            }
+            State::UnicodeSurrogateStart => {
+                match c {
+                    Char('\\') => {
+                        slf.next_state = State::UnicodeSurrogateStringEscape;
+                    }
+                    Char(_) => {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Unpaired UTF-16 surrogate"
+                        )));
+                    }
+                    Eof => {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Unpaired UTF-16 surrogate at end of file"
+                        )));
+                    }
                 }
-            },
-            State::UnicodeSurrogatePairHalf2Char2 => match c {
-                Char('u') => {
-                    slf.next_state = State::Unicode1;
-                    slf.charcode = 0;
-                },
-                _ => {
-                    return Err(ParsingError::InvalidJson(
-                        format!("Expected 'u' of '\\uXXXX' sequence for second half of \
-                                 Unicode surrogate pair escape sequence")
-                    ));
+            }
+            State::UnicodeSurrogateStringEscape => {
+                match c {
+                    Char('u') => {
+                        slf.unicode_buffer = CompactString::with_capacity(4);
+                        slf.next_state = State::UnicodeSurrogate;
+                    }
+                    Char(_) => {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Unpaired UTF-16 surrogate"
+                        )));
+                    }
+                    Eof => {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Unpaired UTF-16 surrogate at end of file"
+                        )));
+                    }
                 }
-            },
+            }
+            State::UnicodeSurrogate => {
+                match c {
+                    Char(c) => {
+                        slf.unicode_buffer.push(c);
+                    }
+                    Eof => {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Unterminated unicode literal at end of file"
+                        )));
+                    }
+                }
+                if slf.unicode_buffer.len() == 4 {
+                    let Ok(charcode) = u16::from_str_radix(
+                        slf.unicode_buffer.as_str(), 16
+                    ) else {
+                        let unicode_buffer = slf.unicode_buffer.as_str();
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Invalid unicode literal: \\u{unicode_buffer}"
+                        )));
+                    };
+                    if !is_surrogate(charcode) {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "Second half of UTF-16 surrogate pair is not a surrogate!"
+                        )));
+                    }
+                    let Some(prev_charcode) = slf.prev_charcode else {
+                        return Err(ParsingError::InvalidJson(format!(
+                            "This should never happen, please report it as a bug..."
+                        )));
+                    };
+                    c = Char(
+                        decode_surrogate_pair(prev_charcode, charcode)
+                        .map_err(|_| ParsingError::InvalidJson(format!(
+                            "Error decoding UTF-16 surrogate pair \
+                            \\u{prev_charcode:x}\\u{charcode:x}"
+                        )))?
+                    );
+                    slf.prev_charcode = None;
+                    slf.next_state = State::String_;
+                    add_char = true;
+                }
+            }
         }
 
         if add_char {
