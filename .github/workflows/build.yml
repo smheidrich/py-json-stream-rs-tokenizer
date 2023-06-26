@@ -104,7 +104,7 @@ jobs:
             HOST_HOME_DIR_UNIX="${{ env.OUTER_HOME }}"
             CARGO_HOME_UNIX="${{ env.OUTER_HOME }}/.cargo"
             RUSTUP_HOME_UNIX="${{ env.OUTER_HOME }}/.rustup"
-            CARGO_TARGET_DIR_UNIX="${ env.OUTER_HOME }}/target"
+            CARGO_TARGET_DIR_UNIX="${{ env.OUTER_HOME }}/target"
           CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_BUILD_LINUX: >
             bash $PROJ_DIR/ci-utils/before-build-linux.sh
