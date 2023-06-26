@@ -18,3 +18,4 @@ rm -rf "$HOST_HOME_DIR_UNIX/cargo-home-dirs/$ver"
 ls "$HOST_HOME_DIR_UNIX/cargo-home-dirs/$ver/"
 mkdir -p "$HOST_HOME_DIR_UNIX/cargo-home-dirs/$ver"
 mv "$CARGO_HOME_UNIX" "$RUSTUP_HOME_UNIX" "$HOST_HOME_DIR_UNIX/cargo-home-dirs/$ver/"
+true
