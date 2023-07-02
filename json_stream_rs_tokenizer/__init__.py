@@ -60,15 +60,26 @@ class RequestedFeatureUnavailable(ExtensionException):
     pass
 
 
-def rust_tokenizer_or_raise(requires_bigint=True):
+def rust_tokenizer_or_raise(requires_bigint=True, **kwargs):
     """
     Args:
         requires_bigint: Deprecated, has no effect as arbitrary-size
-        integers are now always supported via fallback to conversion in Python.
+            integers are now always supported via fallback to conversion in
+            Python.
+        kwargs: Keyword arguments *excluding the `stream` argument* with which
+            you're planning to instantiate the tokenizer. Facilitates checking
+            if any of them (or their specific values) aren't known or supported
+            yet.
 
     Raises:
         ExtensionUnavailable: If the Rust extension is not available.
+        RequestedFeatureUnavailable: If a requested feature is not available.
     """
+    if kwargs:
+        raise RequestedFeatureUnavailable(
+            "some requested features are unknown in this version of "
+            f"json-stream-rs-tokenizer: {kwargs.values()}"
+        )
     try:
         return RustTokenizer
     except NameError as e:
