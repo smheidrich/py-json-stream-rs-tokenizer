@@ -39,6 +39,9 @@ use CharOrEof::{Char, Eof};
 mod unicode_utils;
 use crate::unicode_utils::{is_surrogate, decode_surrogate_pair, UnicodeError};
 
+mod strings;
+use crate::strings::JsonStringReader;
+
 #[derive(Clone)]
 enum TokenType {
     Operator = 0,
