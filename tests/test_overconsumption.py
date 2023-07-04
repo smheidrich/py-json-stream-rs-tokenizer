@@ -119,7 +119,7 @@ def test_correct_cursor_disabled(s, to_bytes_or_str_buf, to_bytes_or_str):
     to build their own workarounds for the issue in Python if they so choose.
     """
     buf = to_bytes_or_str_buf(s)
-    tokenizer = RustTokenizer(buf, False)
+    tokenizer = RustTokenizer(buf, correct_cursor=False)
     for kind, val in tokenizer:
         if val == "}":
             break

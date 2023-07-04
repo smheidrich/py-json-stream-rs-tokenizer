@@ -90,7 +90,7 @@ enum State {
 ///     ending up in places unrelated to the actual tokenization progress. For
 ///     seekable streams, the improvement shouldn't be noticable.
 #[pyclass]
-#[pyo3(text_signature = "(stream, correct_cursor=True)")]
+#[pyo3(text_signature = "(stream, *, correct_cursor=True)")]
 struct RustTokenizer {
     stream: Box<dyn SuitableStream + Send>,
     completed: bool,
@@ -142,7 +142,7 @@ impl From<UnicodeError> for ParsingError {
 #[pymethods]
 impl RustTokenizer {
     #[new]
-    #[args(correct_cursor = "true")]
+    #[args("*", correct_cursor = "true")]
     fn new(stream: PyObject, correct_cursor: bool) -> PyResult<Self> {
         Ok(RustTokenizer {
             stream: make_suitable_stream(stream, correct_cursor)?,
