@@ -83,12 +83,13 @@ enum State {
 ///   stream: Python file-like object / stream to read JSON from. Can be
 ///     either in text mode or in binary mode (so long as the bytes are valid
 ///     UTF-8).
-///   correct_cursor: Whether it is required that the cursor is left in the
-///     correct position (behind the last processed character) after
-///     park_cursor() has been called. If set to False, performance for
-///     unseekable streams is drastically improved at the cost of the cursor
-///     ending up in places unrelated to the actual tokenization progress. For
-///     seekable streams, the improvement shouldn't be noticable.
+///   correct_cursor: *(not part of API yet, may be removed at any point)*
+///     Whether it is required that the cursor is left in the correct position
+///     (behind the last processed character) after park_cursor() has been
+///     called. If set to False, performance for unseekable streams is
+///     drastically improved at the cost of the cursor ending up in places
+///     unrelated to the actual tokenization progress. For seekable streams, the
+///     improvement shouldn't be noticable.
 #[pyclass]
 #[pyo3(text_signature = "(stream, *, correct_cursor=True)")]
 struct RustTokenizer {
