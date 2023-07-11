@@ -15,9 +15,9 @@ pub struct SuitableUnseekableBufferedBytesStream {
 }
 
 impl SuitableUnseekableBufferedBytesStream {
-    pub fn new(inner: PyBytesStream) -> Self {
+    pub fn new(inner: PyBytesStream, bufsize: usize) -> Self {
         SuitableUnseekableBufferedBytesStream {
-            reader: Some(Reader::new(inner)),
+            reader: Some(Reader::with_chunk_size(inner, bufsize)),
         }
     }
 }

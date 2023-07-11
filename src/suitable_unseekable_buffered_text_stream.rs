@@ -12,14 +12,16 @@ use std::iter::Iterator;
 /// This means that the necessary traits (see below) are implemented for it.
 pub struct SuitableUnseekableBufferedTextStream {
     inner: PyTextStream,
+    buffer_size: usize,
     chars_iter: OwnedChars,
     chars_read_from_buf: usize,
 }
 
 impl SuitableUnseekableBufferedTextStream {
-    pub fn new(inner: PyTextStream) -> Self {
+    pub fn new(inner: PyTextStream, buffer_size: usize) -> Self {
         SuitableUnseekableBufferedTextStream {
             inner,
+            buffer_size,
             chars_iter: OwnedChars::from_string("".to_owned()),
             chars_read_from_buf: 0,
         }
@@ -32,7 +34,7 @@ impl Utf8CharSource for SuitableUnseekableBufferedTextStream {
             self.chars_read_from_buf += 1;
             Ok(Some(c))
         } else {
-            let buf = self.inner.read_string(8000)?; // TODO make configurable
+            let buf = self.inner.read_string(self.buffer_size)?;
             self.chars_iter = buf.into_chars();
             self.chars_read_from_buf = 0;
             let oc = self.chars_iter.next();

@@ -382,8 +382,7 @@ dependencies = [
 [[package]]
 name = "utf8-read"
 version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fb566ac06e11c3f13872ebcb0e72ea5f97f0f65a16f45048d0adea21edc28018"
+source = "git+https://github.com/smheidrich/utf8-read-rs.git?branch=configurable-chunk-size#0690310179a4fad9304101c1a431f19cfb809bbe"
 
 [[package]]
 name = "utf8-width"

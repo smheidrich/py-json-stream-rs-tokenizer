@@ -90,10 +90,12 @@ def rust_tokenizer_or_raise(requires_bigint=True, **kwargs):
         ExtensionUnavailable: If the Rust extension is not available.
         RequestedFeatureUnavailable: If a requested feature is not available.
     """
-    if kwargs:
+    supported_kwargs = {"buffering"}
+    unsupported = kwargs.keys() - supported_kwargs
+    if unsupported:
         raise RequestedFeatureUnavailable(
             "some requested features are unknown in this version of "
-            f"json-stream-rs-tokenizer: {kwargs.values()}"
+            f"json-stream-rs-tokenizer: {unsupported}"
         )
     try:
         return RustTokenizer

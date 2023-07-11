@@ -16,7 +16,8 @@ thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
 utf8-io = ">=0.16.0,<0.17"
-utf8-read = ">=0.4.0,<0.5"
+#utf8-read = ">=0.4.0,<0.5"
+utf8-read = { git = "https://github.com/smheidrich/utf8-read-rs.git", branch = "configurable-chunk-size" }
 utf8-width = ">=0.1.6,<0.2"
 
 [build-dependencies]
