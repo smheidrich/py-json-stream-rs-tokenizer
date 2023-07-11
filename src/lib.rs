@@ -39,6 +39,8 @@ use CharOrEof::{Char, Eof};
 mod unicode_utils;
 use crate::unicode_utils::{is_surrogate, decode_surrogate_pair, UnicodeError};
 
+use crate::suitable_stream::BufferingMode;
+
 #[derive(Clone)]
 enum TokenType {
     Operator = 0,
@@ -83,6 +85,8 @@ enum State {
 ///   stream: Python file-like object / stream to read JSON from. Can be
 ///     either in text mode or in binary mode (so long as the bytes are valid
 ///     UTF-8).
+///   buffering: Internal buffer size. -1 (the default) means to let the
+///     implementation choose a buffer size. Can conflict with `correct_cursor`.
 ///   correct_cursor: *(not part of API yet, may be removed at any point)*
 ///     Whether it is required that the cursor is left in the correct position
 ///     (behind the last processed character) after park_cursor() has been
@@ -91,7 +95,7 @@ enum State {
 ///     unrelated to the actual tokenization progress. For seekable streams, the
 ///     improvement shouldn't be noticable.
 #[pyclass]
-#[pyo3(text_signature = "(stream, *, correct_cursor=True)")]
+#[pyo3(text_signature = "(stream, *, buffering=-1, correct_cursor=True)")]
 struct RustTokenizer {
     stream: Box<dyn SuitableStream + Send>,
     completed: bool,
@@ -119,7 +123,7 @@ impl IntoPy<PyObject> for TokenType {
 }
 
 #[derive(Error, Debug)]
-pub enum ParsingError {
+    pub enum ParsingError {
     #[error("{0}")]
     InvalidJson(String),
     #[error("Error due to limitation: {0}")]
@@ -143,10 +147,18 @@ impl From<UnicodeError> for ParsingError {
 #[pymethods]
 impl RustTokenizer {
     #[new]
-    #[args("*", correct_cursor = "true")]
-    fn new(stream: PyObject, correct_cursor: bool) -> PyResult<Self> {
+    #[args("*", buffering = -1, correct_cursor = "true")]
+    fn new(stream: PyObject, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
+        let buffering_mode = if buffering < 0 {
+            BufferingMode::DontCare
+        } else if buffering == 0 || buffering == 1 {
+            BufferingMode::Unbuffered
+        } else {
+            BufferingMode::BufferedWithSize(buffering.try_into().unwrap())
+        };
+        let stream = make_suitable_stream(stream, buffering_mode, correct_cursor)?;
         Ok(RustTokenizer {
-            stream: make_suitable_stream(stream, correct_cursor)?,
+            stream,
             completed: false,
             advance: true,
             token: String::new(),

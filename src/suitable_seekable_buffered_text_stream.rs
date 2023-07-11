@@ -13,15 +13,17 @@ use std::iter::Iterator;
 /// This means that the necessary traits (see below) are implemented for it.
 pub struct SuitableSeekableBufferedTextStream {
     inner: PyTextStream,
+    buffer_size: usize,
     chars_iter: OwnedChars,
     chars_read_from_buf: usize,
     buf_start_seek_pos: Option<OpaqueSeekPos>,
 }
 
 impl SuitableSeekableBufferedTextStream {
-    pub fn new(inner: PyTextStream) -> Self {
+    pub fn new(inner: PyTextStream, buffer_size: usize) -> Self {
         SuitableSeekableBufferedTextStream {
             inner,
+            buffer_size,
             chars_iter: OwnedChars::from_string("".to_owned()),
             chars_read_from_buf: 0,
             buf_start_seek_pos: None,
@@ -38,7 +40,7 @@ impl Utf8CharSource for SuitableSeekableBufferedTextStream {
             // TODO: I don't think this can handle actually getting to EOF very well (buf size
             // becomes 0? => no seek), but probably not relevant
             self.buf_start_seek_pos = Some(self.inner.seek(OpaqueSeekFrom::Current)?);
-            let buf = self.inner.read_string(8000)?; // TODO make configurable
+            let buf = self.inner.read_string(self.buffer_size)?;
             self.chars_iter = buf.into_chars();
             self.chars_read_from_buf = 0;
             let oc = self.chars_iter.next();
