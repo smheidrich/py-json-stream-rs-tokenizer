@@ -59,7 +59,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -v -e .[test]
         shell: bash
-      - name: Run tests
+      - name: Run Cargo tests
+        run: |
+          cargo test --no-default-features
+        # XXX doesn't work on Pypy due to some shared lib issues...
+        if: "!startsWith(matrix.python-version, 'pypy')"
+      - name: Run pytest tests
         run: |
           pytest
       - name: Save Rust/Cargo cache

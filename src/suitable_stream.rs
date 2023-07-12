@@ -56,6 +56,7 @@ pub enum BufferingMode {
     BufferedWithSize(usize),
 }
 
+#[derive(Debug, PartialEq)]
 enum StreamSettings {
     Unbuffered,
     UnseekableBuffered(usize),
@@ -141,4 +142,85 @@ pub fn make_suitable_stream(
             )))
         }
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::rstest;
+
+    #[rstest]
+    #[case(
+        true,
+        BufferingMode::BufferedWithSize(5),
+        true,
+        Ok(StreamSettings::SeekableBuffered(5))
+    )]
+    #[case(
+        false,
+        BufferingMode::BufferedWithSize(5),
+        true,
+        Ok(StreamSettings::UnseekableBuffered(5))
+    )]
+    #[case(true, BufferingMode::Unbuffered, true, Ok(StreamSettings::Unbuffered))]
+    #[case(false, BufferingMode::Unbuffered, true, Ok(StreamSettings::Unbuffered))]
+    #[case(
+        true,
+        BufferingMode::BufferedWithSize(5),
+        false,
+        Err(PyValueError::new_err(format!(
+            "Incompatible stream requirements: correct_cursor and a buffer size > 1 \
+            are only possible if the given stream is seekable, which this one is not"
+        )))
+    )]
+    #[case(
+        false,
+        BufferingMode::BufferedWithSize(5),
+        false,
+        Ok(StreamSettings::UnseekableBuffered(5))
+    )]
+    #[case(true, BufferingMode::Unbuffered, false, Ok(StreamSettings::Unbuffered))]
+    #[case(
+        false,
+        BufferingMode::Unbuffered,
+        false,
+        Ok(StreamSettings::Unbuffered)
+    )]
+    #[case(
+        true,
+        BufferingMode::DontCare,
+        true,
+        Ok(StreamSettings::SeekableBuffered(DEFAULT_BUFSIZE))
+    )]
+    #[case(
+        false,
+        BufferingMode::DontCare,
+        true,
+        Ok(StreamSettings::UnseekableBuffered(DEFAULT_BUFSIZE))
+    )]
+    #[case(true, BufferingMode::DontCare, false, Ok(StreamSettings::Unbuffered))]
+    #[case(
+        false,
+        BufferingMode::DontCare,
+        false,
+        Ok(StreamSettings::UnseekableBuffered(DEFAULT_BUFSIZE))
+    )]
+    fn test_decide_stream_settings(
+        #[case] correct_cursor: bool,
+        #[case] buffering: BufferingMode,
+        #[case] seekable: bool,
+        #[case] expected_result: PyResult<StreamSettings>,
+    ) {
+        let result = decide_stream_settings(correct_cursor, buffering, seekable);
+        if let (Ok(result_val), Ok(expected_result_val)) = (&result, &expected_result) {
+            assert_eq!(result_val, expected_result_val);
+        } else {
+            if let (Err(_result_val), Err(_expected_result_val)) = (&result, &expected_result) {
+                //assert_eq!(result_val.to_string(), expected_result_val.to_string());
+                //TODO ^ doesn't work because to_string() / Display requires Python interp...
+            } else {
+                assert!(false, "expected {:?}, got {:?}", expected_result, result);
+            }
+        }
+    }
 }
