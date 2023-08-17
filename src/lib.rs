@@ -144,6 +144,15 @@ impl From<UnicodeError> for ParsingError {
     }
 }
 
+enum Token {
+    Operator(String),
+    String_(String),
+    Integer(AppropriateInt),
+    Float(f64),
+    Boolean(bool),
+    Null,
+}
+
 #[pymethods]
 impl RustTokenizer {
     #[new]
@@ -196,7 +205,7 @@ impl RustTokenizer {
             }
             match slf.c {
                 Some(c) => {
-                    match RustTokenizer::process_char(slf.borrow_mut(), py, Char(c)) {
+                    match RustTokenizer::process_char_py(slf.borrow_mut(), py, Char(c)) {
                         Ok(tok) => {
                             now_token = tok;
                             slf.state = slf.next_state.clone();
@@ -218,7 +227,7 @@ impl RustTokenizer {
                 }
             }
         }
-        match RustTokenizer::process_char(slf.borrow_mut(), py, Eof) {
+        match RustTokenizer::process_char_py(slf.borrow_mut(), py, Eof) {
             Ok(tok) => {
                 now_token = tok;
             }
@@ -283,11 +292,24 @@ impl RustTokenizer {
 }
 
 impl RustTokenizer {
-    fn process_char<'a>(
+    fn process_char_py<'a>(
         slf: &mut Self,
         py: Python<'_>,
         c: CharOrEof,
     ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
+        match RustTokenizer::process_char(slf.borrow_mut(), c) {
+            Ok(Some(Token::Operator(s))) => Ok(Some((TokenType::Operator, Some(s.into_py(py))))),
+            Ok(Some(Token::String_(s))) => Ok(Some((TokenType::String_, Some(s.into_py(py))))),
+            Ok(Some(Token::Integer(n))) => Ok(Some((TokenType::Number, Some(n.into_py(py))))),
+            Ok(Some(Token::Float(f))) => Ok(Some((TokenType::Number, Some(f.into_py(py))))),
+            Ok(Some(Token::Boolean(b))) => Ok(Some((TokenType::Boolean, Some(b.into_py(py))))),
+            Ok(Some(Token::Null)) => Ok(Some((TokenType::Null, None))),
+            Ok(None) => Ok(None),
+            Err(e) => Err(e),
+        }
+    }
+
+    fn process_char<'a>(slf: &mut Self, c: CharOrEof) -> Result<Option<Token>, ParsingError> {
         slf.advance = true;
         slf.next_state = slf.state.clone();
         let mut now_token = None;
@@ -298,27 +320,27 @@ impl RustTokenizer {
             State::Whitespace => match c {
                 Char('{') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some("{".into_py(py))));
+                    now_token = Some(Token::Operator("{".to_owned()));
                 }
                 Char('}') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some("}".into_py(py))));
+                    now_token = Some(Token::Operator("}".to_owned()));
                 }
                 Char('[') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some("[".into_py(py))));
+                    now_token = Some(Token::Operator("[".to_owned()));
                 }
                 Char(']') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some("]".into_py(py))));
+                    now_token = Some(Token::Operator("]".to_owned()));
                 }
                 Char(',') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some(",".into_py(py))));
+                    now_token = Some(Token::Operator(",".to_owned()));
                 }
                 Char(':') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::Operator, Some(":".into_py(py))));
+                    now_token = Some(Token::Operator(":".to_owned()));
                 }
                 Char('"') => {
                     slf.next_state = State::String_;
@@ -370,7 +392,7 @@ impl RustTokenizer {
                     slf.completed = true;
                     match AppropriateInt::from_str(&slf.token) {
                         Ok(parsed_num) => {
-                            now_token = Some((TokenType::Number, Some(parsed_num.into_py(py))));
+                            now_token = Some(Token::Integer(parsed_num));
                         }
                         Err(ParseIntError::General(e)) => {
                             return Err(ParsingError::InvalidJson(format!(
@@ -403,7 +425,7 @@ impl RustTokenizer {
                 _ if is_delimiter(c) => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((TokenType::Number, Some(0.into_py(py))));
+                    now_token = Some(Token::Integer(AppropriateInt::Normal(0)));
                     slf.advance = false;
                 }
                 _ => {
@@ -444,10 +466,7 @@ impl RustTokenizer {
                 }
                 _ if is_delimiter(c) => {
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::Number,
-                        Some(slf.token.parse::<f64>()?.into_py(py)),
-                    ));
+                    now_token = Some(Token::Float(slf.token.parse::<f64>()?));
                     slf.next_state = State::Whitespace;
                     slf.advance = false;
                 }
@@ -467,10 +486,7 @@ impl RustTokenizer {
                 }
                 _ if is_delimiter(c) => {
                     slf.completed = true;
-                    now_token = Some((
-                        TokenType::Number,
-                        Some(slf.token.parse::<f64>()?.into_py(py)),
-                    ));
+                    now_token = Some(Token::Float(slf.token.parse::<f64>()?));
                     slf.next_state = State::Whitespace;
                     slf.advance = false;
                 }
@@ -525,7 +541,7 @@ impl RustTokenizer {
                 Char('e') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((TokenType::Boolean, Some(false.into_py(py))));
+                    now_token = Some(Token::Boolean(false));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -557,7 +573,7 @@ impl RustTokenizer {
                 Char('e') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((TokenType::Boolean, Some(true.into_py(py))));
+                    now_token = Some(Token::Boolean(true));
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -589,7 +605,7 @@ impl RustTokenizer {
                 Char('l') => {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
-                    now_token = Some((TokenType::Null, None));
+                    now_token = Some(Token::Null);
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
@@ -600,7 +616,7 @@ impl RustTokenizer {
             State::String_ => match c {
                 Char('\"') => {
                     slf.completed = true;
-                    now_token = Some((TokenType::String_, Some(slf.token.clone().into_py(py))));
+                    now_token = Some(Token::String_(slf.token.clone()));
                     slf.next_state = State::StringEnd;
                 }
                 Char('\\') => {
