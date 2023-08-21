@@ -7,10 +7,13 @@
 use crate::int::{AppropriateInt, ParseIntError};
 use crate::remainder::StreamData;
 use crate::suitable_stream::{make_suitable_stream, SuitableStream};
+use crate::user_facing_json_string_reader::UserFacingJsonStringReader;
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
 use std::borrow::BorrowMut;
+use std::io;
+use std::mem::swap;
 use std::num::ParseFloatError;
 use std::str::FromStr;
 use thiserror::Error;
@@ -30,6 +33,7 @@ mod suitable_unbuffered_bytes_stream;
 mod suitable_unbuffered_text_stream;
 mod suitable_unseekable_buffered_bytes_stream;
 mod suitable_unseekable_buffered_text_stream;
+mod user_facing_json_string_reader;
 mod utf8_char_source;
 
 mod char_or_eof;
@@ -87,6 +91,7 @@ enum State {
 ///     UTF-8).
 ///   buffering: Internal buffer size. -1 (the default) means to let the
 ///     implementation choose a buffer size. Can conflict with `correct_cursor`.
+///   strings_as_files: Whether to return strings as file-like objects instead.
 ///   correct_cursor: *(not part of API yet, may be removed at any point)*
 ///     Whether it is required that the cursor is left in the correct position
 ///     (behind the last processed character) after park_cursor() has been
@@ -95,9 +100,10 @@ enum State {
 ///     unrelated to the actual tokenization progress. For seekable streams, the
 ///     improvement shouldn't be noticable.
 #[pyclass]
-#[pyo3(text_signature = "(stream, *, buffering=-1, correct_cursor=True)")]
-struct RustTokenizer {
+#[pyo3(text_signature = "(stream, *, buffering=-1, strings_as_files=False, correct_cursor=True)")]
+pub struct RustTokenizer {
     stream: Box<dyn SuitableStream + Send>,
+    strings_as_files: bool,
     completed: bool,
     advance: bool,
     token: String,
@@ -144,9 +150,28 @@ impl From<UnicodeError> for ParsingError {
     }
 }
 
+pub enum JsonStreamingError {
+    ParsingError(ParsingError),
+    IOError(io::Error),
+}
+
+impl From<ParsingError> for JsonStreamingError {
+    fn from(e: ParsingError) -> JsonStreamingError {
+        JsonStreamingError::ParsingError(e)
+    }
+}
+
+impl From<io::Error> for JsonStreamingError {
+    fn from(e: io::Error) -> JsonStreamingError {
+        JsonStreamingError::IOError(e)
+    }
+}
+
+#[derive(Clone)]
 enum Token {
     Operator(String),
     String_(String),
+    StringAsFile, // handled specially
     Integer(AppropriateInt),
     Float(f64),
     Boolean(bool),
@@ -156,8 +181,13 @@ enum Token {
 #[pymethods]
 impl RustTokenizer {
     #[new]
-    #[args("*", buffering = -1, correct_cursor = "true")]
-    fn new(stream: PyObject, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
+    #[args("*", buffering = -1, strings_as_files = "false", correct_cursor = "true")]
+    fn new(
+        stream: PyObject,
+        buffering: i64,
+        strings_as_files: bool,
+        correct_cursor: bool,
+    ) -> PyResult<Self> {
         let buffering_mode = if buffering < 0 {
             BufferingMode::DontCare
         } else if buffering == 0 || buffering == 1 {
@@ -168,6 +198,7 @@ impl RustTokenizer {
         let stream = make_suitable_stream(stream, buffering_mode, correct_cursor)?;
         Ok(RustTokenizer {
             stream,
+            strings_as_files,
             completed: false,
             advance: true,
             token: String::new(),
@@ -179,81 +210,34 @@ impl RustTokenizer {
             prev_charcode: None,
         })
     }
+
     fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
         slf
     }
+
     fn __next__(
         mut slf: PyRefMut<'_, Self>,
         py: Python<'_>,
     ) -> PyResult<Option<(TokenType, Option<PyObject>)>> {
-        let mut now_token;
-        loop {
-            if slf.advance {
-                match slf.stream.read_char() {
-                    Ok(r) => match r {
-                        Some(r) => slf.c = Some(r),
-                        None => slf.c = None,
-                    },
-                    Err(e) => {
-                        let index = slf.index;
-                        return Err(PyIOError::new_err(format!(
-                            "I/O error while parsing (index {index}): {e:?}"
-                        )));
-                    }
-                }
-                slf.index += 1;
-            }
-            match slf.c {
-                Some(c) => {
-                    match RustTokenizer::process_char_py(slf.borrow_mut(), py, Char(c)) {
-                        Ok(tok) => {
-                            now_token = tok;
-                            slf.state = slf.next_state.clone();
-                        }
-                        Err(e) => {
-                            let index = slf.index;
-                            return Err(PyValueError::new_err(format!("{e} at index {index}")));
-                        }
-                    }
-                    if slf.completed {
-                        slf.completed = false;
-                        slf.token = String::new();
-                        return Ok(now_token.clone());
-                    }
-                }
-                None => {
-                    slf.advance = false;
-                    break;
-                }
-            }
-        }
-        match RustTokenizer::process_char_py(slf.borrow_mut(), py, Eof) {
-            Ok(tok) => {
-                now_token = tok;
-            }
-            Err(e) => {
+        match RustTokenizer::read_next_token(&mut slf) {
+            Ok(maybe_tok) => Ok(match maybe_tok {
+                Some(tok) => Some(RustTokenizer::token_to_py_tuple(slf, tok, py)),
+                None => None,
+            }),
+            Err(e) => Err({
                 let index = slf.index;
-                return Err(PyValueError::new_err(format!("{e} at index {index}")));
-            }
-        }
-        if slf.completed {
-            match now_token {
-                Some(now_token) => {
-                    // these are just to ensure in the next iteration we'll end
-                    // up in the slf.completed = false branch and quit:
-                    slf.completed = false;
-                    slf.state = State::Whitespace;
-                    // final token
-                    return Ok(Some(now_token));
+                match e {
+                    JsonStreamingError::ParsingError(e) => {
+                        PyValueError::new_err(format!("{e} at index {index}"))
+                    }
+                    JsonStreamingError::IOError(e) => PyIOError::new_err(format!(
+                        "I/O error while parsing (index {index}): {e:?}"
+                    )),
                 }
-                None => {
-                    return Ok(None);
-                }
-            }
-        } else {
-            return Ok(None);
+            }),
         }
     }
+
     /// Rewind the inner Python stream/file to undo readahead buffering.
     ///
     /// Required because reading char-by-char without buffering is
@@ -292,20 +276,68 @@ impl RustTokenizer {
 }
 
 impl RustTokenizer {
-    fn process_char_py<'a>(
-        slf: &mut Self,
+    fn read_next_token(slf: &mut Self) -> Result<Option<Token>, JsonStreamingError> {
+        let mut now_token;
+        loop {
+            if slf.advance {
+                match slf.stream.read_char()? {
+                    Some(r) => slf.c = Some(r),
+                    None => slf.c = None,
+                }
+                slf.index += 1;
+            }
+            match slf.c {
+                Some(c) => {
+                    now_token = RustTokenizer::process_char(slf.borrow_mut(), Char(c))?;
+                    slf.state = slf.next_state.clone();
+                    if slf.completed {
+                        slf.completed = false;
+                        slf.token = String::new();
+                        return Ok(now_token.clone());
+                    }
+                }
+                None => {
+                    slf.advance = false;
+                    break;
+                }
+            }
+        }
+        now_token = RustTokenizer::process_char(slf.borrow_mut(), Eof)?;
+        if slf.completed {
+            match now_token {
+                Some(now_token) => {
+                    // these are just to ensure in the next iteration we'll end
+                    // up in the slf.completed = false branch and quit:
+                    slf.completed = false;
+                    slf.state = State::Whitespace;
+                    // final token
+                    return Ok(Some(now_token));
+                }
+                None => {
+                    return Ok(None);
+                }
+            }
+        } else {
+            return Ok(None);
+        }
+    }
+
+    fn token_to_py_tuple<'a>(
+        slf: PyRefMut<'_, Self>,
+        tok: Token,
         py: Python<'_>,
-        c: CharOrEof,
-    ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
-        match RustTokenizer::process_char(slf.borrow_mut(), c) {
-            Ok(Some(Token::Operator(s))) => Ok(Some((TokenType::Operator, Some(s.into_py(py))))),
-            Ok(Some(Token::String_(s))) => Ok(Some((TokenType::String_, Some(s.into_py(py))))),
-            Ok(Some(Token::Integer(n))) => Ok(Some((TokenType::Number, Some(n.into_py(py))))),
-            Ok(Some(Token::Float(f))) => Ok(Some((TokenType::Number, Some(f.into_py(py))))),
-            Ok(Some(Token::Boolean(b))) => Ok(Some((TokenType::Boolean, Some(b.into_py(py))))),
-            Ok(Some(Token::Null)) => Ok(Some((TokenType::Null, None))),
-            Ok(None) => Ok(None),
-            Err(e) => Err(e),
+    ) -> (TokenType, Option<PyObject>) {
+        match tok {
+            Token::Operator(s) => (TokenType::Operator, Some(s.into_py(py))),
+            Token::String_(s) => (TokenType::String_, Some(s.into_py(py))),
+            Token::StringAsFile => (
+                TokenType::String_,
+                Some(UserFacingJsonStringReader::new(slf.into()).into_py(py)),
+            ),
+            Token::Integer(n) => (TokenType::Number, Some(n.into_py(py))),
+            Token::Float(f) => (TokenType::Number, Some(f.into_py(py))),
+            Token::Boolean(b) => (TokenType::Boolean, Some(b.into_py(py))),
+            Token::Null => (TokenType::Null, None),
         }
     }
 
@@ -344,6 +376,10 @@ impl RustTokenizer {
                 }
                 Char('"') => {
                     slf.next_state = State::String_;
+                    if slf.strings_as_files {
+                        slf.completed = true;
+                        now_token = Some(Token::StringAsFile);
+                    }
                 }
                 Char('1'..='9') => {
                     slf.next_state = State::Integer;
@@ -802,6 +838,31 @@ impl RustTokenizer {
         };
 
         Ok(now_token)
+    }
+
+    fn parse_string_contents<'a>(
+        &mut self,
+        max_n_chars: Option<usize>,
+    ) -> Result<Option<String>, JsonStreamingError> {
+        while max_n_chars.map_or(true, |n| self.token.len() < n) {
+            let c = match self
+                .stream
+                .read_char()
+                .map_err(|e| <io::Error as Into<JsonStreamingError>>::into(e))?
+            {
+                Some(c) => Char(c),
+                None => Eof,
+            };
+            self.index += 1; // TODO DRY => pull into new read_char() method on this cls?
+            RustTokenizer::process_char(self, c)?;
+            if let State::StringEnd = self.next_state {
+                self.completed = false;
+                self.advance = true;
+            }
+        }
+        let mut s = String::new();
+        swap(&mut s, &mut self.token);
+        Ok(Some(s))
     }
 }
 
