@@ -5,6 +5,7 @@ __all__ = [
     "ExtensionException",
     "ExtensionUnavailable",
     "RequestedFeatureUnavailable",
+    "JsonStringReader",
 ]
 
 
@@ -20,6 +21,7 @@ try:
     from .json_stream_rs_tokenizer import (
         RustTokenizer as _RustTokenizer,
         supports_bigint as _supports_bigint,
+        JsonStringReader,
     )
 
     # included only for backwards-compatibility - to the outside world, bigint
@@ -90,7 +92,7 @@ def rust_tokenizer_or_raise(requires_bigint=True, **kwargs):
         ExtensionUnavailable: If the Rust extension is not available.
         RequestedFeatureUnavailable: If a requested feature is not available.
     """
-    supported_kwargs = {"buffering"}
+    supported_kwargs = {"buffering", "strings_as_files"}
     unsupported = kwargs.keys() - supported_kwargs
     if unsupported:
         raise RequestedFeatureUnavailable(
