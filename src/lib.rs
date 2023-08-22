@@ -25,11 +25,11 @@ mod read_string;
 mod remainder;
 mod suitable_seekable_buffered_bytes_stream;
 mod suitable_seekable_buffered_text_stream;
-mod suitable_unseekable_buffered_bytes_stream;
-mod suitable_unseekable_buffered_text_stream;
 mod suitable_stream;
 mod suitable_unbuffered_bytes_stream;
 mod suitable_unbuffered_text_stream;
+mod suitable_unseekable_buffered_bytes_stream;
+mod suitable_unseekable_buffered_text_stream;
 mod utf8_char_source;
 
 mod char_or_eof;
@@ -37,7 +37,7 @@ use crate::char_or_eof::CharOrEof;
 use CharOrEof::{Char, Eof};
 
 mod unicode_utils;
-use crate::unicode_utils::{is_surrogate, decode_surrogate_pair, UnicodeError};
+use crate::unicode_utils::{decode_surrogate_pair, is_surrogate, UnicodeError};
 
 use crate::suitable_stream::BufferingMode;
 
@@ -123,7 +123,7 @@ impl IntoPy<PyObject> for TokenType {
 }
 
 #[derive(Error, Debug)]
-    pub enum ParsingError {
+pub enum ParsingError {
     #[error("{0}")]
     InvalidJson(String),
     #[error("Error due to limitation: {0}")]
@@ -372,7 +372,7 @@ impl RustTokenizer {
                             "Invalid JSON character: {c:?}"
                         )));
                     }
-                },
+                }
                 Eof => (),
             },
             State::Integer => match c {
@@ -721,41 +721,37 @@ impl RustTokenizer {
                     }
                 }
             }
-            State::UnicodeSurrogateStart => {
-                match c {
-                    Char('\\') => {
-                        slf.next_state = State::UnicodeSurrogateStringEscape;
-                    }
-                    Char(_) => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unpaired UTF-16 surrogate"
-                        )));
-                    }
-                    Eof => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unpaired UTF-16 surrogate at end of file"
-                        )));
-                    }
+            State::UnicodeSurrogateStart => match c {
+                Char('\\') => {
+                    slf.next_state = State::UnicodeSurrogateStringEscape;
                 }
-            }
-            State::UnicodeSurrogateStringEscape => {
-                match c {
-                    Char('u') => {
-                        slf.unicode_buffer = CompactString::with_capacity(4);
-                        slf.next_state = State::UnicodeSurrogate;
-                    }
-                    Char(_) => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unpaired UTF-16 surrogate"
-                        )));
-                    }
-                    Eof => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unpaired UTF-16 surrogate at end of file"
-                        )));
-                    }
+                Char(_) => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Unpaired UTF-16 surrogate"
+                    )));
                 }
-            }
+                Eof => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Unpaired UTF-16 surrogate at end of file"
+                    )));
+                }
+            },
+            State::UnicodeSurrogateStringEscape => match c {
+                Char('u') => {
+                    slf.unicode_buffer = CompactString::with_capacity(4);
+                    slf.next_state = State::UnicodeSurrogate;
+                }
+                Char(_) => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Unpaired UTF-16 surrogate"
+                    )));
+                }
+                Eof => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Unpaired UTF-16 surrogate at end of file"
+                    )));
+                }
+            },
             State::UnicodeSurrogate => {
                 match c {
                     Char(c) => {
@@ -786,13 +782,12 @@ impl RustTokenizer {
                             "This should never happen, please report it as a bug..."
                         )));
                     };
-                    c = Char(
-                        decode_surrogate_pair(prev_charcode, charcode)
-                        .map_err(|_| ParsingError::InvalidJson(format!(
+                    c = Char(decode_surrogate_pair(prev_charcode, charcode).map_err(|_| {
+                        ParsingError::InvalidJson(format!(
                             "Error decoding UTF-16 surrogate pair \
                             \\u{prev_charcode:x}\\u{charcode:x}"
-                        )))?
-                    );
+                        ))
+                    })?);
                     slf.prev_charcode = None;
                     slf.next_state = State::String_;
                     add_char = true;
