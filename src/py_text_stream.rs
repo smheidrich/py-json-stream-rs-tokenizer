@@ -1,5 +1,6 @@
 use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
 use crate::py_common::PySeekWhence;
+use crate::py_err::TracebackDisplay;
 use crate::read_string::ReadString;
 use pyo3::{PyObject, PyResult, Python};
 use std::io;
@@ -27,24 +28,45 @@ impl ReadString for PyTextStream {
                 .call_method1("read", (size,))?
                 .extract::<String>()
         })
-        .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))
+        .map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::Other,
+                format!(
+                    "Error reading up to {} bytes from Python text stream: {}\n{}",
+                    size,
+                    e,
+                    e.traceback_display(),
+                ),
+            )
+        })
     }
 }
 
 impl OpaqueSeek for PyTextStream {
     fn seek(&mut self, pos: OpaqueSeekFrom) -> io::Result<OpaqueSeekPos> {
+        let (offset, whence) = match pos {
+            OpaqueSeekFrom::Start(x) => (x.0, PySeekWhence::Set),
+            OpaqueSeekFrom::Current => (0, PySeekWhence::Cur),
+            OpaqueSeekFrom::End => (0, PySeekWhence::End),
+        };
         Python::with_gil(|py| -> PyResult<u64> {
-            let (offset, whence) = match pos {
-                OpaqueSeekFrom::Start(x) => (x.0, PySeekWhence::Set),
-                OpaqueSeekFrom::Current => (0, PySeekWhence::Cur),
-                OpaqueSeekFrom::End => (0, PySeekWhence::End),
-            };
             self.inner
                 .as_ref(py)
                 .call_method1("seek", (offset, whence))?
                 .extract::<u64>()
         })
         .map(|x| OpaqueSeekPos(x))
-        .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))
+        .map_err(|e| {
+            io::Error::new(
+                io::ErrorKind::Other,
+                format!(
+                    "Error seeking to offset {} (from {:?}) in Python text stream: {}\n{}",
+                    offset,
+                    whence,
+                    e,
+                    e.traceback_display(),
+                ),
+            )
+        })
     }
 }
