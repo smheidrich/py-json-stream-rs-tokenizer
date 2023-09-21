@@ -1,6 +1,7 @@
 use pyo3::conversion::IntoPy;
 use pyo3::{PyObject, Python};
 
+#[derive(Debug, Clone, Copy)]
 pub enum PySeekWhence {
     Set = 0,
     Cur = 1,

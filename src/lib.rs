@@ -18,6 +18,7 @@ use thiserror::Error;
 mod int;
 mod opaque_seek;
 mod park_cursor;
+mod py_err;
 mod py_bytes_stream;
 mod py_common;
 mod py_text_stream;
