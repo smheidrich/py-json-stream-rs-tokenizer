@@ -5,18 +5,22 @@ use std::fmt::{Display, Error, Formatter};
 // outer
 
 pub trait TracebackDisplay<'a> {
-    fn traceback_display(&'a self) -> Box<dyn 'a + Display>;
+    type Displayer: 'a + Display;
+
+    fn traceback_display(&'a self) -> Self::Displayer;
 }
 
 impl<'a> TracebackDisplay<'a> for PyErr {
-    fn traceback_display(&'a self) -> Box<dyn 'a + Display> {
-        Box::new(PyErrTracebackDisplayer { py_err: self })
+    type Displayer = PyErrTracebackDisplayer<'a>;
+
+    fn traceback_display(&'a self) -> Self::Displayer {
+        PyErrTracebackDisplayer { py_err: self }
     }
 }
 
 // inner
 
-struct PyErrTracebackDisplayer<'a> {
+pub struct PyErrTracebackDisplayer<'a> {
     py_err: &'a PyErr,
 }
 
