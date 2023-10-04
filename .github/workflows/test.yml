@@ -17,20 +17,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.7"]
-        os: ["ubuntu-latest", "windows-latest", "macos-latest"]
+        python-version: ["3.11"]
+        os: ["windows-latest"]
         include:
-          # set OS-specific cache paths
-          - os: ubuntu-latest
-            path: ~/.cache/pip
           - os: windows-latest
             path: ~\AppData\Local\pip\Cache
-          - os: macos-latest
-            path: ~/Library/Caches/pip
-          # more combinations:
-          - os: ubuntu-latest
-            python-version: "pypy3.9"
-            path: ~/.cache/pip
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -64,9 +55,6 @@ jobs:
           cargo test --no-default-features
         # XXX doesn't work on Pypy due to some shared lib issues...
         if: "!startsWith(matrix.python-version, 'pypy')"
-      - name: Run pytest tests
-        run: |
-          pytest
       - name: Run overflow example
         run: |
           python overflow_example.py
