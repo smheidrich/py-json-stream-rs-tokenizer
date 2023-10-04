@@ -67,6 +67,9 @@ jobs:
       - name: Run pytest tests
         run: |
           pytest
+      - name: Run overflow example
+        run: |
+          python overflow_example.py
       - name: Save Rust/Cargo cache
         uses: actions/cache/save@v3
         if: always()
