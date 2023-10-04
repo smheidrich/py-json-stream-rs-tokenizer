@@ -39,9 +39,17 @@ class InfiniteJsonFile:
   # print(f.read(8), end="")
 
 f = InfiniteJsonFile()
-r = RustTokenizer(f)
-N = 1000000000
-for i in range(N+1):
-  if i % (N/10) == 0:
-    print(f"{i}/{N} ({f.size} bytes)")
-  next(r)
+N = 100000
+with open("temp.json", "w") as o:
+  for i in range(N+1):
+    if i % (N/10) == 0:
+      print(f"{i}/{N} ({i*10000}/{N*10000} bytes)")
+    o.write(f.read(10000))
+
+with open("temp.json") as f:
+  size = 0
+  r = RustTokenizer(f)
+  for i, tok in enumerate(r):
+    if i % 1000000 == 0:
+      print(f"{i} ({size} bytes)")
+    size += len(next(r))
