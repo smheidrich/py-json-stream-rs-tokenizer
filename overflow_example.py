@@ -7,7 +7,7 @@ from string import ascii_lowercase
 from tqdm import tqdm
 
 
-def main() -> None:
+def main():
     print("Generating ...")
     with open("foo.json", "w") as f:
         json.dump(
@@ -65,7 +65,7 @@ def random_dict_items(
         yield random_string(), random_value()
 
 
-def random_value() -> int | float | str | bool | None:
+def random_value():
     return choice(
         [
             random_int,
@@ -77,19 +77,19 @@ def random_value() -> int | float | str | bool | None:
     )()
 
 
-def random_string() -> str:
+def random_string():
     return "".join(choice(ascii_lowercase) for _ in range(10))
 
 
-def random_int() -> int:
+def random_int():
     return choice([-1, 0, 1]) * choice(range(100))
 
 
-def random_float() -> float:
+def random_float():
     return choice([-1, 1]) * choice(range(100)) / 10
 
 
-def random_bool() -> bool:
+def random_bool():
     return choice([True, False])
 
 
