@@ -2,7 +2,7 @@ from json_stream_rs_tokenizer import RustTokenizer
 
 class InfiniteJsonFile:
   start = "["
-  elem = "12345, "
+  elem = "1234, \n"
 
   def __init__(self):
     self.remainder = self.start
