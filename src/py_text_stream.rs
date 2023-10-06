@@ -1,8 +1,8 @@
-use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
+use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom};
 use crate::py_common::PySeekWhence;
 use crate::py_err::TracebackDisplay;
 use crate::read_string::ReadString;
-use pyo3::{PyObject, PyResult, Python};
+use pyo3::{IntoPy, PyObject, PyResult, Python};
 use std::io;
 
 /// Python file-like object (= stream) that outputs text.
@@ -13,6 +13,16 @@ pub struct PyTextStream {
 impl PyTextStream {
     pub fn new(inner: PyObject) -> Self {
         PyTextStream { inner }
+    }
+}
+
+/// It is an error to do arithmetic on this number.
+#[derive(Clone, Debug)]
+pub struct PyOpaqueSeekPos(pub PyObject);
+
+impl IntoPy<PyObject> for PyOpaqueSeekPos {
+    fn into_py(self, _py: Python<'_>) -> PyObject {
+        self.0
     }
 }
 
@@ -43,30 +53,34 @@ impl ReadString for PyTextStream {
 }
 
 impl OpaqueSeek for PyTextStream {
-    fn seek(&mut self, pos: OpaqueSeekFrom) -> io::Result<OpaqueSeekPos> {
-        let (offset, whence) = match pos {
-            OpaqueSeekFrom::Start(x) => (x.0, PySeekWhence::Set),
-            OpaqueSeekFrom::Current => (0, PySeekWhence::Cur),
-            OpaqueSeekFrom::End => (0, PySeekWhence::End),
-        };
-        Python::with_gil(|py| -> PyResult<u64> {
-            self.inner
+    type OpaqueSeekPos = PyOpaqueSeekPos;
+
+    fn seek(&mut self, pos: OpaqueSeekFrom<PyOpaqueSeekPos>) -> io::Result<PyOpaqueSeekPos> {
+        Python::with_gil(|py| {
+            let (offset, whence) = match pos {
+                OpaqueSeekFrom::Start(x) => (x, PySeekWhence::Set),
+                OpaqueSeekFrom::Current => {
+                    (PyOpaqueSeekPos((0 as u8).into_py(py)), PySeekWhence::Cur)
+                }
+                OpaqueSeekFrom::End => (PyOpaqueSeekPos((0 as u8).into_py(py)), PySeekWhence::End),
+            };
+            match self
+                .inner
                 .as_ref(py)
-                .call_method1("seek", (offset, whence))?
-                .extract::<u64>()
-        })
-        .map(|x| OpaqueSeekPos(x))
-        .map_err(|e| {
-            io::Error::new(
-                io::ErrorKind::Other,
-                format!(
-                    "Error seeking to offset {} (from {:?}) in Python text stream: {}\n{}",
-                    offset,
-                    whence,
-                    e,
-                    e.traceback_display(),
-                ),
-            )
+                .call_method1("seek", (offset.clone(), whence))
+            {
+                Ok(x) => Ok(PyOpaqueSeekPos(x.into_py(py))),
+                Err(e) => Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!(
+                        "Error seeking to offset {:?} (from {:?}) in Python text stream: {}\n{}",
+                        offset,
+                        whence,
+                        e,
+                        e.traceback_display(),
+                    ),
+                )),
+            }
         })
     }
 }

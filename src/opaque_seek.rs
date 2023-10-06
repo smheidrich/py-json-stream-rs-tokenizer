@@ -1,12 +1,8 @@
 use std::io;
 
-/// It is an error to do arithmetic on this number.
 #[derive(Copy, Clone)]
-pub struct OpaqueSeekPos(pub u64);
-
-#[derive(Copy, Clone)]
-pub enum OpaqueSeekFrom {
-    Start(OpaqueSeekPos),
+pub enum OpaqueSeekFrom<P> {
+    Start(P),
     #[allow(dead_code)] // to be honest I don't understand why this is dead code if it's public...
     End,
     Current,
@@ -21,5 +17,8 @@ pub enum OpaqueSeekFrom {
 /// other position e.g. by adding numbers to one or making one up results in
 /// undefined behavior. So don't do that.
 pub trait OpaqueSeek {
-    fn seek(&mut self, pos: OpaqueSeekFrom) -> io::Result<OpaqueSeekPos>;
+    type OpaqueSeekPos;
+
+    fn seek(&mut self, pos: OpaqueSeekFrom<Self::OpaqueSeekPos>)
+        -> io::Result<Self::OpaqueSeekPos>;
 }
