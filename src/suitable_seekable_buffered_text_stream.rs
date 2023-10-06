@@ -1,6 +1,6 @@
-use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom, OpaqueSeekPos};
+use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom};
 use crate::park_cursor::ParkCursorChars;
-use crate::py_text_stream::PyTextStream;
+use crate::py_text_stream::{PyOpaqueSeekPos, PyTextStream};
 use crate::read_string::ReadString;
 use crate::remainder::{Remainder, StreamData};
 use crate::utf8_char_source::Utf8CharSource;
@@ -16,7 +16,7 @@ pub struct SuitableSeekableBufferedTextStream {
     buffer_size: usize,
     chars_iter: OwnedChars,
     chars_read_from_buf: usize,
-    buf_start_seek_pos: Option<OpaqueSeekPos>,
+    buf_start_seek_pos: Option<PyOpaqueSeekPos>,
 }
 
 impl SuitableSeekableBufferedTextStream {
@@ -55,8 +55,8 @@ impl Utf8CharSource for SuitableSeekableBufferedTextStream {
 impl ParkCursorChars for SuitableSeekableBufferedTextStream {
     fn park_cursor(&mut self) -> io::Result<()> {
         let chars_read_from_buf = self.chars_read_from_buf;
-        if let Some(buf_start_seek_pos) = self.buf_start_seek_pos {
-            self.inner.seek(OpaqueSeekFrom::Start(buf_start_seek_pos))?;
+        if let Some(buf_start_seek_pos) = &self.buf_start_seek_pos {
+            self.inner.seek(OpaqueSeekFrom::Start(buf_start_seek_pos.clone()))?;
             self.inner.read_string(chars_read_from_buf)?;
             self.chars_iter = OwnedChars::from_string("".to_owned());
         }
