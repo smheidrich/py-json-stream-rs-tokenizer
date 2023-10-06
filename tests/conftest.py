@@ -1,4 +1,4 @@
-from io import BytesIO, StringIO
+from io import SEEK_CUR, SEEK_END, BytesIO, StringIO
 
 import pytest
 
@@ -9,7 +9,14 @@ class StringIOWithLargeCursorPositions(StringIO):
     """
 
     def seek(self, offset, whence):
-        return super().seek(offset, whence) + 2**64
+        input_offset, output_offset = 0, 0
+        if offset != 0:
+            input_offset = - 2**64
+        if whence == SEEK_CUR:
+            output_offset = 2**64
+        if whence == SEEK_END:
+            raise NotImplementedError("...")
+        return super().seek(offset + input_offset, whence) + output_offset
 
     def tell(self):
         return super().tell() + 2**64
