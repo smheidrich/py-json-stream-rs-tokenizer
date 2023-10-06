@@ -63,7 +63,13 @@ def test_overconsumption_park_cursor_skip_3_chars_and_continue(
             break
     tokenizer.park_cursor()
     if isinstance(buf, StringIO):
-        assert buf.tell() == expected_str_cursor_pos
+        # for text streams, tell() and seek() positions are opaque numbers
+        # => compare by checking equality to position after reading N chars
+        pos = buf.tell()
+        buf.seek(0, 0)  # go back to start
+        buf.read(expected_str_cursor_pos)  # read N chars
+        expected_str_cursor_opaque_pos = buf.tell()
+        assert pos == expected_str_cursor_opaque_pos
     elif isinstance(buf, BytesIO):
         assert buf.tell() == expected_bytes_cursor_pos
     else:
