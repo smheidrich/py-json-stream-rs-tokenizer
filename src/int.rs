@@ -18,12 +18,14 @@ pub enum ParseIntError {
 use num_bigint::BigInt;
 
 #[cfg(not(any(Py_LIMITED_API, PyPy)))]
+#[derive(Clone)]
 pub enum AppropriateInt {
     Normal(i64),
     Big(BigInt),
 }
 
 #[cfg(all(any(Py_LIMITED_API, PyPy)))]
+#[derive(Clone)]
 pub enum AppropriateInt {
     Normal(i64),
     Big(String), // to be converted into int on the Python side
