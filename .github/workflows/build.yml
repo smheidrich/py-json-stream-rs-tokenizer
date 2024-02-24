@@ -123,7 +123,7 @@ jobs:
             {delocate_archs} -w {dest_dir} {wheel};
             bash $PROJ_DIR/ci-utils/after-build.sh
           CIBW_BUILD_VERBOSITY: 1
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./wheelhouse/*.whl
 
@@ -138,7 +138,7 @@ jobs:
         run: pip install 'postprocess-sdist-make-rust-ext-opt>=0.2,<0.3'
       - name: Post-process sdist to make extension optional
         run: postprocess-sdist-make-rust-ext-opt -fO dist dist/*.tar.gz
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
 
@@ -147,7 +147,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
           name: artifact
           path: dist
