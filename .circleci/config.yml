@@ -20,7 +20,7 @@ jobs:
             TWINE_USERNAME: __token__
           command: |
             # install deps
-            python3 -m pip install --user cibuildwheel==2.13.1 twine
+            python3 -m pip install --user cibuildwheel==2.16.5 twine
             # build wheels
             python3 -m cibuildwheel --output-dir wheelhouse
             # upload wheels to PyPI
