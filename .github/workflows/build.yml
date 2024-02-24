@@ -41,18 +41,18 @@ jobs:
           cache-name: cargo-home
         with:
           path: ~/cargo-home-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v9.2
+          key: ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v10.0
           restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v9.
+            ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v10.
       - name: Rust build cache
         uses: actions/cache@v3
         env:
           cache-name: rust-build
         with:
           path: ~/cargo-target-dirs
-          key: ${{ env.cache-name }}-${{ runner.os }}-v9.2-${{ matrix.cibw-build-prefix }}-${{ hashFiles('**/Cargo.toml') }}
+          key: ${{ env.cache-name }}-${{ runner.os }}-v10.0-${{ matrix.cibw-build-prefix }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: |
-            ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v9.
+            ${{ env.cache-name }}-${{ runner.os }}-${{ matrix.cibw-build-prefix }}-v10.
       - name: Save env vars for cibuildwheel
         run: >
           echo "MAIN_DIR=$PWD" >> "$GITHUB_ENV";
