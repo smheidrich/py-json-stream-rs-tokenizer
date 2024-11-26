@@ -32,7 +32,7 @@ jobs:
           - os: ubuntu-20.04
             cibw-build-prefix: '*'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Restore mtimes of files in repo
         uses: chetan/git-restore-mtime-action@v1.2
       - name: Cargo home cache
@@ -131,7 +131,7 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Build sdist
         run: pipx run build --sdist
       - name: Install tool to post-process sdist to make extension optional
