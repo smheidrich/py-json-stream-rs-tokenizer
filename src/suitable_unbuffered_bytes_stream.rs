@@ -25,7 +25,7 @@ impl SuitableUnbufferedBytesStream {
 impl Utf8CharSource for SuitableUnbufferedBytesStream {
     fn read_char(&mut self) -> io::Result<Option<char>> {
         let mut buf: [u8; 4] = [0; 4];
-        let n_bytes_read = self.inner.read(&mut buf[..1])?;
+        let mut n_bytes_read = self.inner.read(&mut buf[..1])?;
         if n_bytes_read < 1 {
             // EOF
             return Ok(None);
@@ -36,6 +36,7 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
                 "broken stream: returns more bytes than requested",
             ));
         }
+        // try to see if we're at the start of a unicode char:
         let n_bytes_in_char = get_width(buf[0]);
         if n_bytes_in_char == 0 {
             return Err(io::Error::new(
@@ -43,16 +44,12 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
                 format!("invalid UTF-8 start byte: {:x}", buf[0]),
             ));
         }
-        let n_bytes_actual = {
-            if n_bytes_in_char > 1 {
-                // this should only return fewer bytes than requested if it's cut short by EOF
-                // => will evaluate to invalid UTF-8 at the end and return an error
-                self.inner.read(&mut buf[1..n_bytes_in_char])? + 1
-            } else {
-                1
-            }
-        };
-        Ok(std::str::from_utf8(&buf[..n_bytes_actual])
+        // if we're inside a unicode char, we try and read its remaining bytes
+        // (or until EOF, in which case from_utf8 below will return an error):
+        while n_bytes_read < n_bytes_in_char {
+            n_bytes_read += self.inner.read(&mut buf[n_bytes_read..n_bytes_in_char])?;
+        }
+        Ok(std::str::from_utf8(&buf[..n_bytes_read])
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?
             .chars()
             .next())
