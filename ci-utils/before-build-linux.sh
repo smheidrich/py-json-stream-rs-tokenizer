@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# install libatomic (required for newer rustup versions to work on older
+# CentOS-based manylinux images - may have to be removed again once
+# cibuildwheel updates the default manylinux image used from 2014 to sth.
+# newer)
+yum install -y libatomic
+
 # copy file mtimes from host
 shopt -s dotglob
 cp -r -a --attributes-only "$HOST_PROJ_DIR"/* "$PROJ_DIR"/
