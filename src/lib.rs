@@ -157,7 +157,7 @@ enum Token {
 #[pymethods]
 impl RustTokenizer {
     #[new]
-    #[args("*", buffering = -1, correct_cursor = "true")]
+    #[pyo3(signature = (stream, *, buffering = -1, correct_cursor = true))]
     fn new(stream: PyObject, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
         let buffering_mode = if buffering < 0 {
             BufferingMode::DontCare
