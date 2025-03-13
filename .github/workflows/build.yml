@@ -92,6 +92,7 @@ jobs:
             CARGO_HOME_UNIX="$HOME/.cargo"
             RUSTUP_HOME_UNIX="$HOME/.rustup"
             CARGO_TARGET_DIR_UNIX="$HOME/target"
+            MACOSX_DEPLOYMENT_TARGET="10.12"
           CIBW_ENVIRONMENT_WINDOWS: >
             HOST_HOME_DIR="$HOME"
             HOST_PROJ_DIR="$GITHUB_WORKSPACE"
