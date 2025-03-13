@@ -31,9 +31,9 @@ enum ReadReturnType {
 fn determine_read_return_type(stream: &PyObject) -> PyResult<ReadReturnType> {
     Python::with_gil(|py| -> PyResult<ReadReturnType> {
         let read_result = stream.as_ref(py).call_method1("read", (0,))?;
-        Ok(if read_result.is_instance_of::<PyString>()? {
+        Ok(if read_result.is_instance_of::<PyString>() {
             ReadReturnType::String
-        } else if read_result.is_instance_of::<PyBytes>()? {
+        } else if read_result.is_instance_of::<PyBytes>() {
             ReadReturnType::Bytes
         } else {
             ReadReturnType::Other(format!("{}", read_result.get_type()))
