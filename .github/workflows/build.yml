@@ -38,7 +38,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Restore mtimes of files in repo
-        uses: chetan/git-restore-mtime-action@v1.2
+        uses: chetan/git-restore-mtime-action@v2.0
       - name: Cargo home cache
         uses: actions/cache@v4
         env:
