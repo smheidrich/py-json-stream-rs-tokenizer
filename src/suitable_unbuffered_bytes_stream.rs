@@ -47,7 +47,11 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
         // if we're inside a unicode char, we try and read its remaining bytes
         // (or until EOF, in which case from_utf8 below will return an error):
         while n_bytes_read < n_bytes_in_char {
-            n_bytes_read += self.inner.read(&mut buf[n_bytes_read..n_bytes_in_char])?;
+            let n_bytes_read_cur = self.inner.read(&mut buf[n_bytes_read..n_bytes_in_char])?;
+            if n_bytes_read_cur < 1 {
+                break; // EOF
+            }
+            n_bytes_read += n_bytes_read_cur;
         }
         Ok(std::str::from_utf8(&buf[..n_bytes_read])
             .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?

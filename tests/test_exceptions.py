@@ -48,6 +48,11 @@ def test_malformed_utf8(bytes_to_bytes_buf):
     buf = bytes_to_bytes_buf(bytes([129]))
     with pytest.raises(
         OSError,
-        match=re.escape("malformed UTF-8 of 1 bytes at line 1 char 1"),
+        # TODO: Unify these exception messages at some point (uses two
+        #   different Rust functions for Unicode conversion which return
+        #   different error messages...)
+        match=re.compile(
+            "(invalid|malformed) UTF-8 (sequence )?of .* bytes", re.IGNORECASE
+        ),
     ):
         list(load(buf))
