@@ -11,7 +11,7 @@ class StringIOWithLargeCursorPositions(StringIO):
     def seek(self, offset, whence):
         input_offset, output_offset = 0, 0
         if offset != 0:
-            input_offset = - 2**64
+            input_offset = -(2**64)
         if whence == SEEK_CUR:
             output_offset = 2**64
         if whence == SEEK_END:
@@ -50,6 +50,29 @@ def to_bytes_or_str_buf(request):
 
         def make_unseekable_bytesio(s: str):
             bio = BytesIO(s.encode("utf-8"))
+            bio.seekable = lambda: False
+            return bio
+
+        return make_unseekable_bytesio
+    else:
+        assert False
+
+
+# TODO: Factor out commonalities with ^
+@pytest.fixture(params=["bytes", "bytes-unseekable"])
+def bytes_to_bytes_buf(request):
+    """
+    Provides function that takes bytes and returns a bytes buffer.
+
+    Causes dependent test to be repeated for all relevant byte buffer types
+    (seekable, unseekable).
+    """
+    if request.param == "bytes":
+        return lambda b: BytesIO(b)
+    elif request.param == "bytes-unseekable":
+
+        def make_unseekable_bytesio(b: bytes):
+            bio = BytesIO(b)
             bio.seekable = lambda: False
             return bio
 

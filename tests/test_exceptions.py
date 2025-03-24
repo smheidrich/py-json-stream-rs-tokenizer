@@ -42,3 +42,12 @@ def test_invalid_character_code():
         ),
     ):
         list(load(StringIO(r'"\uz"')))
+
+
+def test_malformed_utf8(bytes_to_bytes_buf):
+    buf = bytes_to_bytes_buf(bytes([129]))
+    with pytest.raises(
+        OSError,
+        match=re.escape("malformed UTF-8 of 1 bytes at line 1 char 1"),
+    ):
+        list(load(buf))
