@@ -21,18 +21,18 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, windows-2022, macos-13]
         cibw-build-prefix: ['*']
         cibw-build-kind: [all]  # for artifact name only
         include:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             cibw-build-prefix: cp*
             cibw-build-kind: cp
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             cibw-build-prefix: pp*
             cibw-build-kind: pp
         exclude:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             cibw-build-prefix: '*'
             cibw-build-kind: all
     steps:

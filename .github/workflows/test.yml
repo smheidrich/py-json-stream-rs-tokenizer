@@ -18,17 +18,17 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.7"]
-        os: [ubuntu-20.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, windows-2022, macos-13]
         include:
           # set OS-specific cache paths
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             path: ~/.cache/pip
           - os: windows-2022
             path: ~\AppData\Local\pip\Cache
           - os: macos-13
             path: ~/Library/Caches/pip
           # more combinations:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             python-version: "pypy3.9"
             path: ~/.cache/pip
     steps:
