@@ -1,3 +1,4 @@
 include Cargo.toml
+include Cargo.lock
 recursive-include src *
 include tests/conftest.py
