@@ -6,7 +6,7 @@ on:
       - 'v[0-9]*'
     #branches:
       #- main
-  #pull_request:
+  pull_request:
   # ^ uncomment when testing changes to build
 
 concurrency:
@@ -21,7 +21,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-13]
+        os: [ubuntu-20.04, windows-2022, macos-13]
         cibw-build-prefix: ['*']
         cibw-build-kind: [all]  # for artifact name only
         include:
