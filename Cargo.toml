@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 num-bigint = ">=0.4.3,<0.5"
 owned_chars = ">=0.3.2,<0.4"
-pyo3 = { version = ">=0.18,<0.19", features = ["num-bigint"] }
+pyo3 = { version = ">=0.18, <0.27", features = ["num-bigint"] }
 thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
