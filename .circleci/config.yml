@@ -13,6 +13,8 @@ jobs:
       - run:
           name: Build the Linux aarch64 wheels.
           environment:
+            CIBW_ENABLE: >
+              pypy
             CIBW_BEFORE_BUILD_LINUX: >
               curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             CIBW_ENVIRONMENT_LINUX: >

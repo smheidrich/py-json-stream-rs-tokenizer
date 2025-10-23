@@ -66,6 +66,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v3.2.1
         env:
+          CIBW_ENABLE: >
+            pypy
           CIBW_BUILD: >
             ${{ matrix.cibw-build-prefix }}
           CIBW_SKIP: >
