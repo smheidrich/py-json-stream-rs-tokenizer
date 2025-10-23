@@ -15,6 +15,8 @@ jobs:
           environment:
             CIBW_ENABLE: >
               pypy
+            CIBW_SKIP: >
+              cp3??t-*
             CIBW_BEFORE_BUILD_LINUX: >
               curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             CIBW_ENVIRONMENT_LINUX: >

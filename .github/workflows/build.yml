@@ -71,7 +71,7 @@ jobs:
           CIBW_BUILD: >
             ${{ matrix.cibw-build-prefix }}
           CIBW_SKIP: >
-            *musllinux*
+            *musllinux* cp3??t-*
           CIBW_ENVIRONMENT_LINUX: >
             HOST_HOME_DIR="/host/${{ env.OUTER_HOME }}"
             HOST_PROJ_DIR="/host/${{ env.MAIN_DIR }}"
