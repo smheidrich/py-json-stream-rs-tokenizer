@@ -43,5 +43,5 @@ workflows:
             tags:
               only: /^v.*/
             # comment out when testing changes to build:
-            branches:
-              ignore: /.*/
+            #branches:
+              #ignore: /.*/
