@@ -29,7 +29,7 @@ setup(
             "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
         )
     },
-    python_requires=">=3.7,<4",
+    python_requires=">=3.8,<4",
     install_requires=[],
     extras_require={
         "benchmark": [
@@ -49,7 +49,6 @@ setup(
         "Programming Language :: Rust",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
