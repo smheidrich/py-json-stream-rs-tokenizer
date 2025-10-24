@@ -13,6 +13,10 @@ jobs:
       - run:
           name: Build the Linux aarch64 wheels.
           environment:
+            CIBW_ENABLE: >
+              pypy
+            CIBW_SKIP: >
+              cp3??t-*
             CIBW_BEFORE_BUILD_LINUX: >
               curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
             CIBW_ENVIRONMENT_LINUX: >
@@ -20,7 +24,7 @@ jobs:
             TWINE_USERNAME: __token__
           command: |
             # install deps
-            python3 -m pip install --user cibuildwheel==2.23.0 twine
+            python3 -m pip install --user cibuildwheel==3.2.1 twine
             # build wheels
             python3 -m cibuildwheel --output-dir wheelhouse
             # upload wheels to PyPI
