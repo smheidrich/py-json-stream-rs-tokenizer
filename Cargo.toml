@@ -21,7 +21,7 @@ utf8-read = { git = "https://github.com/smheidrich/utf8-read-rs.git", branch = "
 utf8-width = ">=0.1.6,<0.2"
 
 [dev-dependencies]
-rstest = ">=0.18.1,<0.19"
+rstest = ">=0.18.1, <0.27"
 
 [build-dependencies]
 pyo3-build-config = { version = "= 0.18.3", features = ["resolve-config"] }
