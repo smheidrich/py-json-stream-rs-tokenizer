@@ -21,9 +21,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-13]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-13]
         cibw-build-prefix: ['*']
         cibw-build-kind: [all]  # for artifact name only
+        # The only reason the Ubuntu ones are split up into CPython/PyPy is to
+        # prevent running out of runner disk space; as of 2025, the number of
+        # non-EOL PyPy releases has dropped enough that it probably wouldnn't
+        # be an issue anymore, but keeping it anyway just in case
         include:
           - os: ubuntu-22.04
             cibw-build-prefix: cp*
@@ -31,8 +35,17 @@ jobs:
           - os: ubuntu-22.04
             cibw-build-prefix: pp*
             cibw-build-kind: pp
+          - os: ubuntu-22.04-arm
+            cibw-build-prefix: cp*
+            cibw-build-kind: cp
+          - os: ubuntu-22.04-arm
+            cibw-build-prefix: pp*
+            cibw-build-kind: pp
         exclude:
           - os: ubuntu-22.04
+            cibw-build-prefix: '*'
+            cibw-build-kind: all
+          - os: ubuntu-22.04-arm
             cibw-build-prefix: '*'
             cibw-build-kind: all
     steps:
