@@ -18,9 +18,9 @@ use thiserror::Error;
 mod int;
 mod opaque_seek;
 mod park_cursor;
-mod py_err;
 mod py_bytes_stream;
 mod py_common;
+mod py_err;
 mod py_text_stream;
 mod read_string;
 mod remainder;
@@ -695,9 +695,7 @@ impl RustTokenizer {
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
-                    let Ok(charcode) = u16::from_str_radix(
-                        slf.unicode_buffer.as_str(), 16
-                    ) else {
+                    let Ok(charcode) = u16::from_str_radix(slf.unicode_buffer.as_str(), 16) else {
                         let unicode_buffer = slf.unicode_buffer.as_str();
                         return Err(ParsingError::InvalidJson(format!(
                             "Invalid unicode literal: \\u{unicode_buffer}"
@@ -765,9 +763,7 @@ impl RustTokenizer {
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
-                    let Ok(charcode) = u16::from_str_radix(
-                        slf.unicode_buffer.as_str(), 16
-                    ) else {
+                    let Ok(charcode) = u16::from_str_radix(slf.unicode_buffer.as_str(), 16) else {
                         let unicode_buffer = slf.unicode_buffer.as_str();
                         return Err(ParsingError::InvalidJson(format!(
                             "Invalid unicode literal: \\u{unicode_buffer}"
