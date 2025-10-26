@@ -35,7 +35,7 @@ impl Utf8CharSource for SuitableUnseekableBufferedTextStream {
             Ok(Some(c))
         } else {
             let buf = self.inner.read_string(self.buffer_size)?;
-            self.chars_iter = buf.into_chars();
+            self.chars_iter = OwnedCharsExt::into_chars(buf);
             self.chars_read_from_buf = 0;
             let oc = self.chars_iter.next();
             if oc.is_some() {
