@@ -96,7 +96,6 @@ enum State {
 ///     unrelated to the actual tokenization progress. For seekable streams, the
 ///     improvement shouldn't be noticable.
 #[pyclass]
-#[pyo3(text_signature = "(stream, *, buffering=-1, correct_cursor=True)")]
 struct RustTokenizer {
     stream: Box<dyn SuitableStream + Send>,
     completed: bool,
