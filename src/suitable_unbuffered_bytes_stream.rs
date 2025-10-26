@@ -31,16 +31,14 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
             return Ok(None);
         }
         if n_bytes_read > 1 {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(io::Error::other(
                 "broken stream: returns more bytes than requested",
             ));
         }
         // try to see if we're at the start of a unicode char:
         let n_bytes_in_char = get_width(buf[0]);
         if n_bytes_in_char == 0 {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
+            return Err(io::Error::other(
                 format!("invalid UTF-8 start byte: {:x}", buf[0]),
             ));
         }
@@ -54,7 +52,7 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
             n_bytes_read += n_bytes_read_cur;
         }
         Ok(std::str::from_utf8(&buf[..n_bytes_read])
-            .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{}", e)))?
+            .map_err(|e| io::Error::other(format!("{}", e)))?
             .chars()
             .next())
     }

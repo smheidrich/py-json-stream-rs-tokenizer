@@ -66,6 +66,6 @@ pub fn supports_bigint() -> bool {
     }
     #[cfg(not(any(Py_LIMITED_API, PyPy)))]
     {
-        return true;
+        true
     }
 }

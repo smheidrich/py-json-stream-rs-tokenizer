@@ -44,7 +44,7 @@ impl Utf8CharSource for SuitableSeekableBufferedTextStream {
             self.chars_iter = buf.into_chars();
             self.chars_read_from_buf = 0;
             let oc = self.chars_iter.next();
-            if let Some(_) = oc {
+            if oc.is_some() {
                 self.chars_read_from_buf += 1;
             }
             Ok(oc)

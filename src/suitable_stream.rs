@@ -43,10 +43,10 @@ fn determine_read_return_type(stream: &PyObject) -> PyResult<ReadReturnType> {
 
 fn is_seekable(stream: &PyObject) -> PyResult<bool> {
     Python::with_gil(|py| -> PyResult<bool> {
-        Ok(stream
+        stream
             .as_ref(py)
             .call_method1("seekable", ())?
-            .extract::<bool>()?)
+            .extract::<bool>()
     })
 }
 
@@ -73,26 +73,20 @@ fn decide_stream_settings(
         BufferingMode::DontCare => {
             if !correct_cursor {
                 StreamSettings::UnseekableBuffered(DEFAULT_BUFSIZE)
+            } else if seekable {
+                StreamSettings::SeekableBuffered(DEFAULT_BUFSIZE)
             } else {
-                if seekable {
-                    StreamSettings::SeekableBuffered(DEFAULT_BUFSIZE)
-                } else {
-                    StreamSettings::Unbuffered
-                }
+                StreamSettings::Unbuffered
             }
         }
         BufferingMode::BufferedWithSize(bufsize) => {
             if !correct_cursor {
                 StreamSettings::UnseekableBuffered(bufsize)
+            } else if seekable {
+                StreamSettings::SeekableBuffered(bufsize)
             } else {
-                if seekable {
-                    StreamSettings::SeekableBuffered(bufsize)
-                } else {
-                    return Err(PyValueError::new_err(format!(
-                        "Incompatible stream requirements: correct_cursor and a buffer size > 1 \
-                        are only possible if the given stream is seekable, which this one is not"
-                    )));
-                }
+                return Err(PyValueError::new_err("Incompatible stream requirements: correct_cursor and a buffer size > 1 \
+                    are only possible if the given stream is seekable, which this one is not".to_string()));
             }
         }
     })

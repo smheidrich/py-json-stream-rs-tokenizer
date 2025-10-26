@@ -245,14 +245,14 @@ impl RustTokenizer {
                     slf.completed = false;
                     slf.state = State::Whitespace;
                     // final token
-                    return Ok(Some(now_token));
+                    Ok(Some(now_token))
                 }
                 None => {
-                    return Ok(None);
+                    Ok(None)
                 }
             }
         } else {
-            return Ok(None);
+            Ok(None)
         }
     }
     /// Rewind the inner Python stream/file to undo readahead buffering.
@@ -401,9 +401,7 @@ impl RustTokenizer {
                             )));
                         }
                         Err(ParseIntError::TooLargeOrSmall) => {
-                            return Err(ParsingError::Limitation(format!(
-                                "Incapable of parsing integer due to platform constraint"
-                            )));
+                            return Err(ParsingError::Limitation("Incapable of parsing integer due to platform constraint".to_string()));
                         }
                     }
                     slf.advance = false;
@@ -492,9 +490,7 @@ impl RustTokenizer {
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "A number must include only digits"
-                    )));
+                    return Err(ParsingError::InvalidJson("A number must include only digits".to_string()));
                 }
             },
             State::FloatingPoint0 => match c {
@@ -503,9 +499,7 @@ impl RustTokenizer {
                     add_char = true;
                 }
                 _ => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "A number with a decimal point must be followed by a fractional part"
-                    )));
+                    return Err(ParsingError::InvalidJson("A number with a decimal point must be followed by a fractional part".to_string()));
                 }
             },
             State::False1 => match c {
@@ -689,9 +683,7 @@ impl RustTokenizer {
                         slf.unicode_buffer.push(c);
                     }
                     Eof => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unterminated unicode literal at end of file"
-                        )));
+                        return Err(ParsingError::InvalidJson("Unterminated unicode literal at end of file".to_string()));
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
@@ -725,14 +717,10 @@ impl RustTokenizer {
                     slf.next_state = State::UnicodeSurrogateStringEscape;
                 }
                 Char(_) => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "Unpaired UTF-16 surrogate"
-                    )));
+                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate".to_string()));
                 }
                 Eof => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "Unpaired UTF-16 surrogate at end of file"
-                    )));
+                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate at end of file".to_string()));
                 }
             },
             State::UnicodeSurrogateStringEscape => match c {
@@ -741,14 +729,10 @@ impl RustTokenizer {
                     slf.next_state = State::UnicodeSurrogate;
                 }
                 Char(_) => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "Unpaired UTF-16 surrogate"
-                    )));
+                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate".to_string()));
                 }
                 Eof => {
-                    return Err(ParsingError::InvalidJson(format!(
-                        "Unpaired UTF-16 surrogate at end of file"
-                    )));
+                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate at end of file".to_string()));
                 }
             },
             State::UnicodeSurrogate => {
@@ -757,9 +741,7 @@ impl RustTokenizer {
                         slf.unicode_buffer.push(c);
                     }
                     Eof => {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Unterminated unicode literal at end of file"
-                        )));
+                        return Err(ParsingError::InvalidJson("Unterminated unicode literal at end of file".to_string()));
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
@@ -770,14 +752,10 @@ impl RustTokenizer {
                         )));
                     };
                     if !is_surrogate(charcode) {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "Second half of UTF-16 surrogate pair is not a surrogate!"
-                        )));
+                        return Err(ParsingError::InvalidJson("Second half of UTF-16 surrogate pair is not a surrogate!".to_string()));
                     }
                     let Some(prev_charcode) = slf.prev_charcode else {
-                        return Err(ParsingError::InvalidJson(format!(
-                            "This should never happen, please report it as a bug..."
-                        )));
+                        return Err(ParsingError::InvalidJson("This should never happen, please report it as a bug...".to_string()));
                     };
                     c = Char(decode_surrogate_pair(prev_charcode, charcode).map_err(|_| {
                         ParsingError::InvalidJson(format!(

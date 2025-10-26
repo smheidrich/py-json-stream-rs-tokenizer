@@ -32,7 +32,7 @@ impl Utf8CharSource for SuitableSeekableBufferedBytesStream {
                 .as_mut()
                 .unwrap()
                 .next_char()
-                .map_err(|e| (io::Error::new(io::ErrorKind::Other, format!("{}", e))))?
+                .map_err(|e| io::Error::other(format!("{}", e)))?
             {
                 Char::Eof => None,
                 Char::Char(c) => Some(c),

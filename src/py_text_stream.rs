@@ -39,8 +39,7 @@ impl ReadString for PyTextStream {
                 .extract::<String>()
         })
         .map_err(|e| {
-            io::Error::new(
-                io::ErrorKind::Other,
+            io::Error::other(
                 format!(
                     "Error reading up to {} bytes from Python text stream: {}\n{}",
                     size,
@@ -60,9 +59,9 @@ impl OpaqueSeek for PyTextStream {
             let (offset, whence) = match pos {
                 OpaqueSeekFrom::Start(x) => (x, PySeekWhence::Set),
                 OpaqueSeekFrom::Current => {
-                    (PyOpaqueSeekPos((0 as u8).into_py(py)), PySeekWhence::Cur)
+                    (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::Cur)
                 }
-                OpaqueSeekFrom::End => (PyOpaqueSeekPos((0 as u8).into_py(py)), PySeekWhence::End),
+                OpaqueSeekFrom::End => (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::End),
             };
             match self
                 .inner
@@ -70,8 +69,7 @@ impl OpaqueSeek for PyTextStream {
                 .call_method1("seek", (offset.clone(), whence))
             {
                 Ok(x) => Ok(PyOpaqueSeekPos(x.into_py(py))),
-                Err(e) => Err(io::Error::new(
-                    io::ErrorKind::Other,
+                Err(e) => Err(io::Error::other(
                     format!(
                         "Error seeking to offset {:?} (from {:?}) in Python text stream: {}\n{}",
                         offset,

@@ -29,9 +29,8 @@ impl Utf8CharSource for SuitableUnbufferedTextStream {
         } else {
             let mut it = s.chars();
             let c = it.next();
-            if let Some(_) = it.next() {
-                Err(io::Error::new(
-                    io::ErrorKind::Other,
+            if it.next().is_some() {
+                Err(io::Error::other(
                     "got more than 1 char from read_string(1), which should never happen...",
                 ))
             } else {

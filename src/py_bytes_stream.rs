@@ -28,8 +28,7 @@ impl Read for PyBytesStream {
                 .extract::<Vec<u8>>()
         })
         .map_err(|e| {
-            io::Error::new(
-                io::ErrorKind::Other,
+            io::Error::other(
                 format!(
                     "Error reading up to {} bytes from Python bytes stream: {}\n{}",
                     buf.len(),
@@ -47,8 +46,8 @@ impl Seek for PyBytesStream {
     fn seek(&mut self, pos: SeekFrom) -> io::Result<u64> {
         let (offset, whence) = match pos {
             SeekFrom::Start(x) => (x as i64, PySeekWhence::Set),
-            SeekFrom::Current(x) => (x as i64, PySeekWhence::Cur),
-            SeekFrom::End(x) => (x as i64, PySeekWhence::End),
+            SeekFrom::Current(x) => (x, PySeekWhence::Cur),
+            SeekFrom::End(x) => (x, PySeekWhence::End),
         };
         Python::with_gil(|py| -> PyResult<u64> {
             self.inner
@@ -57,8 +56,7 @@ impl Seek for PyBytesStream {
                 .extract::<u64>()
         })
         .map_err(|e| {
-            io::Error::new(
-                io::ErrorKind::Other,
+            io::Error::other(
                 format!(
                     "Error seeking to offset {} (from {:?}) in Python bytes stream: {}\n{}",
                     offset,
