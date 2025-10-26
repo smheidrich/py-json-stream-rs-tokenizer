@@ -293,7 +293,7 @@ impl RustTokenizer {
 }
 
 impl RustTokenizer {
-    fn process_char_py<'a>(
+    fn process_char_py(
         slf: &mut Self,
         py: Python<'_>,
         c: CharOrEof,
@@ -310,7 +310,7 @@ impl RustTokenizer {
         }
     }
 
-    fn process_char<'a>(slf: &mut Self, c: CharOrEof) -> Result<Option<Token>, ParsingError> {
+    fn process_char(slf: &mut Self, c: CharOrEof) -> Result<Option<Token>, ParsingError> {
         slf.advance = true;
         slf.next_state = slf.state.clone();
         let mut now_token = None;
