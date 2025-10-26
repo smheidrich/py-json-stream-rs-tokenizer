@@ -11,7 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 num-bigint = ">=0.4.3,<0.5"
 owned_chars = ">=0.3.2,<0.4"
-pyo3 = { version = ">=0.19,<0.20", features = ["num-bigint"] }
+pyo3 = { version = ">=0.20,<0.21", features = ["num-bigint"] }
 thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
@@ -24,7 +24,7 @@ utf8-width = ">=0.1.6,<0.2"
 rstest = ">=0.18.1,<0.19"
 
 [build-dependencies]
-pyo3-build-config = { version = ">=0.19,<0.20", features = ["resolve-config"] }
+pyo3-build-config = { version = ">=0.20,<0.21", features = ["resolve-config"] }
 
 # workaround for linkage errors when running cargo test:
 # https://pyo3.rs/v0.18.1/faq#i-cant-run-cargo-test-or-i-cant-build-in-a-cargo-workspace-im-having-linker-issues-like-symbol-not-found-or-undefined-reference-to-_pyexc_systemerror
