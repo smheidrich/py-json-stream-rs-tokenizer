@@ -2,6 +2,7 @@ use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom};
 use crate::py_common::PySeekWhence;
 use crate::py_err::TracebackDisplay;
 use crate::read_string::ReadString;
+use pyo3::types::PyAnyMethods;
 use pyo3::{IntoPy, PyObject, PyResult, Python};
 use std::io;
 
@@ -34,19 +35,17 @@ impl ReadString for PyTextStream {
     fn read_string(&mut self, size: usize) -> io::Result<String> {
         Python::with_gil(|py| -> PyResult<String> {
             self.inner
-                .as_ref(py)
+                .bind(py)
                 .call_method1("read", (size,))?
                 .extract::<String>()
         })
         .map_err(|e| {
-            io::Error::other(
-                format!(
-                    "Error reading up to {} bytes from Python text stream: {}\n{}",
-                    size,
-                    e,
-                    e.traceback_display(),
-                ),
-            )
+            io::Error::other(format!(
+                "Error reading up to {} bytes from Python text stream: {}\n{}",
+                size,
+                e,
+                e.traceback_display(),
+            ))
         })
     }
 }
@@ -58,26 +57,22 @@ impl OpaqueSeek for PyTextStream {
         Python::with_gil(|py| {
             let (offset, whence) = match pos {
                 OpaqueSeekFrom::Start(x) => (x, PySeekWhence::Set),
-                OpaqueSeekFrom::Current => {
-                    (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::Cur)
-                }
+                OpaqueSeekFrom::Current => (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::Cur),
                 OpaqueSeekFrom::End => (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::End),
             };
             match self
                 .inner
-                .as_ref(py)
+                .bind(py)
                 .call_method1("seek", (offset.clone(), whence))
             {
                 Ok(x) => Ok(PyOpaqueSeekPos(x.into_py(py))),
-                Err(e) => Err(io::Error::other(
-                    format!(
-                        "Error seeking to offset {:?} (from {:?}) in Python text stream: {}\n{}",
-                        offset,
-                        whence,
-                        e,
-                        e.traceback_display(),
-                    ),
-                )),
+                Err(e) => Err(io::Error::other(format!(
+                    "Error seeking to offset {:?} (from {:?}) in Python text stream: {}\n{}",
+                    offset,
+                    whence,
+                    e,
+                    e.traceback_display(),
+                ))),
             }
         })
     }

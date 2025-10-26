@@ -22,7 +22,7 @@ impl IntoPy<PyObject> for StreamData {
     fn into_py(self, py: Python<'_>) -> PyObject {
         match self {
             StreamData::Text(s) => s.into_py(py),
-            StreamData::Bytes(b) => PyBytes::new(py, b.as_slice()).into_py(py),
+            StreamData::Bytes(b) => PyBytes::new_bound(py, b.as_slice()).into_py(py),
         }
     }
 }

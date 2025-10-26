@@ -1,5 +1,6 @@
 use crate::py_common::PySeekWhence;
 use crate::py_err::TracebackDisplay;
+use pyo3::types::PyAnyMethods;
 use pyo3::{PyObject, PyResult, Python};
 use std::io;
 use std::io::{Read, Seek, SeekFrom};
@@ -23,19 +24,17 @@ impl Read for PyBytesStream {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         let vec = Python::with_gil(|py| -> PyResult<Vec<u8>> {
             self.inner
-                .as_ref(py)
+                .bind(py)
                 .call_method1("read", (buf.len(),))?
                 .extract::<Vec<u8>>()
         })
         .map_err(|e| {
-            io::Error::other(
-                format!(
-                    "Error reading up to {} bytes from Python bytes stream: {}\n{}",
-                    buf.len(),
-                    e,
-                    e.traceback_display(),
-                ),
-            )
+            io::Error::other(format!(
+                "Error reading up to {} bytes from Python bytes stream: {}\n{}",
+                buf.len(),
+                e,
+                e.traceback_display(),
+            ))
         })?;
         buf[..vec.len()].clone_from_slice(&vec);
         Ok(vec.len())
@@ -51,20 +50,18 @@ impl Seek for PyBytesStream {
         };
         Python::with_gil(|py| -> PyResult<u64> {
             self.inner
-                .as_ref(py)
+                .bind(py)
                 .call_method1("seek", (offset, whence))?
                 .extract::<u64>()
         })
         .map_err(|e| {
-            io::Error::other(
-                format!(
-                    "Error seeking to offset {} (from {:?}) in Python bytes stream: {}\n{}",
-                    offset,
-                    whence,
-                    e,
-                    e.traceback_display(),
-                ),
-            )
+            io::Error::other(format!(
+                "Error seeking to offset {} (from {:?}) in Python bytes stream: {}\n{}",
+                offset,
+                whence,
+                e,
+                e.traceback_display(),
+            ))
         })
     }
 }

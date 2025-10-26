@@ -13,7 +13,7 @@ use crate::suitable_unbuffered_text_stream::SuitableUnbufferedTextStream;
 use crate::suitable_unseekable_buffered_bytes_stream::SuitableUnseekableBufferedBytesStream;
 use crate::suitable_unseekable_buffered_text_stream::SuitableUnseekableBufferedTextStream;
 use pyo3::exceptions::{PyTypeError, PyValueError};
-use pyo3::types::{PyBytes, PyString};
+use pyo3::types::{PyAnyMethods, PyBytes, PyString};
 use pyo3::{PyObject, PyResult, Python};
 
 const DEFAULT_BUFSIZE: usize = 8000;
@@ -30,7 +30,7 @@ enum ReadReturnType {
 
 fn determine_read_return_type(stream: &PyObject) -> PyResult<ReadReturnType> {
     Python::with_gil(|py| -> PyResult<ReadReturnType> {
-        let read_result = stream.as_ref(py).call_method1("read", (0,))?;
+        let read_result = stream.bind(py).call_method1("read", (0,))?;
         Ok(if read_result.is_instance_of::<PyString>() {
             ReadReturnType::String
         } else if read_result.is_instance_of::<PyBytes>() {
@@ -44,7 +44,7 @@ fn determine_read_return_type(stream: &PyObject) -> PyResult<ReadReturnType> {
 fn is_seekable(stream: &PyObject) -> PyResult<bool> {
     Python::with_gil(|py| -> PyResult<bool> {
         stream
-            .as_ref(py)
+            .bind(py)
             .call_method1("seekable", ())?
             .extract::<bool>()
     })
@@ -85,8 +85,11 @@ fn decide_stream_settings(
             } else if seekable {
                 StreamSettings::SeekableBuffered(bufsize)
             } else {
-                return Err(PyValueError::new_err("Incompatible stream requirements: correct_cursor and a buffer size > 1 \
-                    are only possible if the given stream is seekable, which this one is not".to_string()));
+                return Err(PyValueError::new_err(
+                    "Incompatible stream requirements: correct_cursor and a buffer size > 1 \
+                    are only possible if the given stream is seekable, which this one is not"
+                        .to_string(),
+                ));
             }
         }
     })
