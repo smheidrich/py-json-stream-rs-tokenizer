@@ -13,7 +13,7 @@ num-bigint = ">=0.4.3,<0.5"
 owned_chars = ">=0.3.2,<0.4"
 # TODO: Migrate off py-clone as recommended in
 # https://pyo3.rs/v0.27.1/migration.html?highlight=bound#pyclone-is-now-gated-behind-the-py-clone-feature
-pyo3 = { version = ">=0.24,<0.25", features = ["num-bigint", "py-clone"] }
+pyo3 = { version = ">=0.25,<0.26", features = ["num-bigint", "py-clone"] }
 thiserror = ">=1.0.37,<2"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
@@ -29,7 +29,7 @@ unwrap-infallible = "0.1.5"
 rstest = ">=0.18.1,<0.19"
 
 [build-dependencies]
-pyo3-build-config = { version = ">=0.24,<0.25", features = ["resolve-config"] }
+pyo3-build-config = { version = ">=0.25,<0.26", features = ["resolve-config"] }
 
 # workaround for linkage errors when running cargo test:
 # https://pyo3.rs/v0.18.1/faq#i-cant-run-cargo-test-or-i-cant-build-in-a-cargo-workspace-im-having-linker-issues-like-symbol-not-found-or-undefined-reference-to-_pyexc_systemerror
