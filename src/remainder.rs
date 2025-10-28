@@ -1,5 +1,6 @@
-use pyo3::types::PyBytes;
-use pyo3::{IntoPy, PyObject, Python};
+use pyo3::types::PyAny;
+use pyo3::{Bound, IntoPyObject, PyErr, Python};
+use unwrap_infallible::UnwrapInfallible;
 
 pub enum StreamData {
     Text(String),
@@ -18,11 +19,15 @@ pub trait Remainder {
     fn remainder(&self) -> StreamData;
 }
 
-impl IntoPy<PyObject> for StreamData {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        match self {
-            StreamData::Text(s) => s.into_py(py),
-            StreamData::Bytes(b) => PyBytes::new_bound(py, b.as_slice()).into_py(py),
-        }
+impl<'py> IntoPyObject<'py> for StreamData {
+    type Target = PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        Ok(match self {
+            StreamData::Text(s) => s.into_pyobject(py).unwrap_infallible().into_any(),
+            StreamData::Bytes(b) => b.as_slice().into_pyobject(py)?,
+        })
     }
 }

@@ -2,9 +2,10 @@ use crate::opaque_seek::{OpaqueSeek, OpaqueSeekFrom};
 use crate::py_common::PySeekWhence;
 use crate::py_err::TracebackDisplay;
 use crate::read_string::ReadString;
-use pyo3::types::PyAnyMethods;
-use pyo3::{IntoPy, PyObject, PyResult, Python};
+use pyo3::types::{PyAny, PyAnyMethods};
+use pyo3::{IntoPyObject, Py, PyObject, PyResult, Python};
 use std::io;
+use unwrap_infallible::UnwrapInfallible;
 
 /// Python file-like object (= stream) that outputs text.
 pub struct PyTextStream {
@@ -18,14 +19,8 @@ impl PyTextStream {
 }
 
 /// It is an error to do arithmetic on this number.
-#[derive(Clone, Debug)]
-pub struct PyOpaqueSeekPos(pub PyObject);
-
-impl IntoPy<PyObject> for PyOpaqueSeekPos {
-    fn into_py(self, _py: Python<'_>) -> PyObject {
-        self.0
-    }
-}
+#[derive(Clone, Debug, IntoPyObject)]
+pub struct PyOpaqueSeekPos(pub Py<PyAny>);
 
 impl ReadString for PyTextStream {
     // TODO Find out if there is a way to transfer this string in a zero-copy way from Py to Rs.
@@ -57,15 +52,33 @@ impl OpaqueSeek for PyTextStream {
         Python::with_gil(|py| {
             let (offset, whence) = match pos {
                 OpaqueSeekFrom::Start(x) => (x, PySeekWhence::Set),
-                OpaqueSeekFrom::Current => (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::Cur),
-                OpaqueSeekFrom::End => (PyOpaqueSeekPos(0_u8.into_py(py)), PySeekWhence::End),
+                OpaqueSeekFrom::Current => (
+                    PyOpaqueSeekPos(
+                        0_u8.into_pyobject(py)
+                            .unwrap_infallible()
+                            .unbind()
+                            .into_any(),
+                    ),
+                    PySeekWhence::Cur,
+                ),
+                OpaqueSeekFrom::End => (
+                    PyOpaqueSeekPos(
+                        0_u8.into_pyobject(py)
+                            .unwrap_infallible()
+                            .unbind()
+                            .into_any(),
+                    ),
+                    PySeekWhence::End,
+                ),
             };
             match self
                 .inner
                 .bind(py)
                 .call_method1("seek", (offset.clone(), whence))
             {
-                Ok(x) => Ok(PyOpaqueSeekPos(x.into_py(py))),
+                Ok(x) => Ok(PyOpaqueSeekPos(
+                    x.into_pyobject(py).unwrap_infallible().unbind(),
+                )),
                 Err(e) => Err(io::Error::other(format!(
                     "Error seeking to offset {:?} (from {:?}) in Python text stream: {}\n{}",
                     offset,

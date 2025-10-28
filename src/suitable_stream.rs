@@ -99,7 +99,7 @@ pub fn make_suitable_stream(
     stream: PyObject,
     buffering: BufferingMode,
     correct_cursor: bool,
-) -> PyResult<Box<dyn SuitableStream + Send>> {
+) -> PyResult<Box<dyn SuitableStream + Send + Sync>> {
     let read_return_type: ReadReturnType = determine_read_return_type(&stream)?;
     let seekable: bool = is_seekable(&stream)?;
     let stream_settings = decide_stream_settings(correct_cursor, buffering, seekable)?;

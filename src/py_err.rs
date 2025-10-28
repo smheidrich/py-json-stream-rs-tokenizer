@@ -29,7 +29,7 @@ impl<'a> Display for PyErrTracebackDisplayer<'a> {
         String::fmt(
             &Python::with_gil(|py| {
                 self.py_err
-                    .traceback_bound(py)
+                    .traceback(py)
                     .map_or(Ok("(no traceback available)".to_string()), |x| x.format())
             })
             .unwrap_or("(error getting traceback)".to_string()),

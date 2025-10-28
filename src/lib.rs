@@ -10,10 +10,12 @@ use crate::suitable_stream::{make_suitable_stream, SuitableStream};
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::types::PyInt;
 use std::borrow::BorrowMut;
 use std::num::ParseFloatError;
 use std::str::FromStr;
 use thiserror::Error;
+use unwrap_infallible::UnwrapInfallible;
 
 mod int;
 mod opaque_seek;
@@ -97,7 +99,7 @@ enum State {
 ///     improvement shouldn't be noticable.
 #[pyclass]
 struct RustTokenizer {
-    stream: Box<dyn SuitableStream + Send>,
+    stream: Box<dyn SuitableStream + Send + Sync>,
     completed: bool,
     advance: bool,
     token: String,
@@ -116,9 +118,13 @@ fn is_delimiter(c: CharOrEof) -> bool {
     }
 }
 
-impl IntoPy<PyObject> for TokenType {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        (self as u32).into_py(py)
+impl<'py> IntoPyObject<'py> for TokenType {
+    type Target = PyInt;
+    type Output = Bound<'py, Self::Target>;
+    type Error = std::convert::Infallible;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        (self as u32).into_pyobject(py)
     }
 }
 
@@ -128,6 +134,8 @@ pub enum ParsingError {
     InvalidJson(String),
     #[error("Error due to limitation: {0}")]
     Limitation(String),
+    #[error("Python error")]
+    PythonError(PyErr),
     #[error("Unknown error")]
     Unknown,
 }
@@ -141,6 +149,12 @@ impl From<ParseFloatError> for ParsingError {
 impl From<UnicodeError> for ParsingError {
     fn from(e: UnicodeError) -> ParsingError {
         ParsingError::InvalidJson(format!("error parsing unicode: {e}"))
+    }
+}
+
+impl From<PyErr> for ParsingError {
+    fn from(e: PyErr) -> ParsingError {
+        ParsingError::PythonError(e)
     }
 }
 
@@ -296,11 +310,34 @@ impl RustTokenizer {
         c: CharOrEof,
     ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
         match RustTokenizer::process_char(slf.borrow_mut(), c) {
-            Ok(Some(Token::Operator(s))) => Ok(Some((TokenType::Operator, Some(s.into_py(py))))),
-            Ok(Some(Token::String_(s))) => Ok(Some((TokenType::String_, Some(s.into_py(py))))),
-            Ok(Some(Token::Integer(n))) => Ok(Some((TokenType::Number, Some(n.into_py(py))))),
-            Ok(Some(Token::Float(f))) => Ok(Some((TokenType::Number, Some(f.into_py(py))))),
-            Ok(Some(Token::Boolean(b))) => Ok(Some((TokenType::Boolean, Some(b.into_py(py))))),
+            Ok(Some(Token::Operator(s))) => Ok(Some((
+                TokenType::Operator,
+                Some(s.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            Ok(Some(Token::String_(s))) => Ok(Some((
+                TokenType::String_,
+                Some(s.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            Ok(Some(Token::Integer(n))) => Ok(Some((
+                TokenType::Number,
+                Some(n.into_pyobject(py)?.unbind().into_any()),
+            ))),
+            Ok(Some(Token::Float(f))) => Ok(Some((
+                TokenType::Number,
+                Some(f.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            // TODO: Why do we need to_owned() for the bool but not the others? May be fixed in
+            //       more recent PyO3 versions?
+            Ok(Some(Token::Boolean(b))) => Ok(Some((
+                TokenType::Boolean,
+                Some(
+                    b.into_pyobject(py)
+                        .unwrap_infallible()
+                        .to_owned()
+                        .unbind()
+                        .into_any(),
+                ),
+            ))),
             Ok(Some(Token::Null)) => Ok(Some((TokenType::Null, None))),
             Ok(None) => Ok(None),
             Err(e) => Err(e),
