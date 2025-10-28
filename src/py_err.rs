@@ -27,7 +27,7 @@ pub struct PyErrTracebackDisplayer<'a> {
 impl<'a> Display for PyErrTracebackDisplayer<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         String::fmt(
-            &Python::with_gil(|py| {
+            &Python::attach(|py| {
                 self.py_err
                     .traceback(py)
                     .map_or(Ok("(no traceback available)".to_string()), |x| x.format())

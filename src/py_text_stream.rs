@@ -3,17 +3,17 @@ use crate::py_common::PySeekWhence;
 use crate::py_err::TracebackDisplay;
 use crate::read_string::ReadString;
 use pyo3::types::{PyAny, PyAnyMethods};
-use pyo3::{IntoPyObject, Py, PyObject, PyResult, Python};
+use pyo3::{IntoPyObject, Py, PyResult, Python};
 use std::io;
 use unwrap_infallible::UnwrapInfallible;
 
 /// Python file-like object (= stream) that outputs text.
 pub struct PyTextStream {
-    inner: PyObject,
+    inner: Py<PyAny>,
 }
 
 impl PyTextStream {
-    pub fn new(inner: PyObject) -> Self {
+    pub fn new(inner: Py<PyAny>) -> Self {
         PyTextStream { inner }
     }
 }
@@ -28,7 +28,7 @@ impl ReadString for PyTextStream {
     // again in Python (so the lifetime can be entirely in our hands), which we can't because there
     // is no way to annotate such facts in Python.
     fn read_string(&mut self, size: usize) -> io::Result<String> {
-        Python::with_gil(|py| -> PyResult<String> {
+        Python::attach(|py| -> PyResult<String> {
             self.inner
                 .bind(py)
                 .call_method1("read", (size,))?
@@ -49,7 +49,7 @@ impl OpaqueSeek for PyTextStream {
     type OpaqueSeekPos = PyOpaqueSeekPos;
 
     fn seek(&mut self, pos: OpaqueSeekFrom<PyOpaqueSeekPos>) -> io::Result<PyOpaqueSeekPos> {
-        Python::with_gil(|py| {
+        Python::attach(|py| {
             let (offset, whence) = match pos {
                 OpaqueSeekFrom::Start(x) => (x, PySeekWhence::Set),
                 OpaqueSeekFrom::Current => (

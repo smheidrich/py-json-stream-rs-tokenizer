@@ -171,7 +171,7 @@ enum Token {
 impl RustTokenizer {
     #[new]
     #[pyo3(signature = (stream, *, buffering = -1, correct_cursor = true))]
-    fn new(stream: PyObject, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
+    fn new(stream: Py<PyAny>, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
         let buffering_mode = if buffering < 0 {
             BufferingMode::DontCare
         } else if buffering == 0 || buffering == 1 {
@@ -199,7 +199,7 @@ impl RustTokenizer {
     fn __next__(
         mut slf: PyRefMut<'_, Self>,
         py: Python<'_>,
-    ) -> PyResult<Option<(TokenType, Option<PyObject>)>> {
+    ) -> PyResult<Option<(TokenType, Option<Py<PyAny>>)>> {
         let mut now_token;
         loop {
             if slf.advance {
@@ -308,7 +308,7 @@ impl RustTokenizer {
         slf: &mut Self,
         py: Python<'_>,
         c: CharOrEof,
-    ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
+    ) -> Result<Option<(TokenType, Option<Py<PyAny>>)>, ParsingError> {
         match RustTokenizer::process_char(slf.borrow_mut(), c) {
             Ok(Some(Token::Operator(s))) => Ok(Some((
                 TokenType::Operator,
