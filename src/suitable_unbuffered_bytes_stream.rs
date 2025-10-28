@@ -38,9 +38,10 @@ impl Utf8CharSource for SuitableUnbufferedBytesStream {
         // try to see if we're at the start of a unicode char:
         let n_bytes_in_char = get_width(buf[0]);
         if n_bytes_in_char == 0 {
-            return Err(io::Error::other(
-                format!("invalid UTF-8 start byte: {:x}", buf[0]),
-            ));
+            return Err(io::Error::other(format!(
+                "invalid UTF-8 start byte: {:x}",
+                buf[0]
+            )));
         }
         // if we're inside a unicode char, we try and read its remaining bytes
         // (or until EOF, in which case from_utf8 below will return an error):

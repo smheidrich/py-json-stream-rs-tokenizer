@@ -23,7 +23,7 @@ pub enum AppropriateInt {
     Big(BigInt),
 }
 
-#[cfg(all(any(Py_LIMITED_API, PyPy)))]
+#[cfg(any(Py_LIMITED_API, PyPy))]
 pub enum AppropriateInt {
     Normal(i64),
     Big(String), // to be converted into int on the Python side
@@ -50,16 +50,22 @@ impl FromStr for AppropriateInt {
     }
 }
 
-impl IntoPy<PyObject> for AppropriateInt {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        match self {
-            AppropriateInt::Normal(num) => num.into_py(py),
-            AppropriateInt::Big(num) => num.into_py(py),
-        }
+impl<'py> IntoPyObject<'py> for AppropriateInt {
+    type Target = PyAny;
+    type Output = Bound<'py, Self::Target>;
+    type Error = PyErr;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        Ok(match self {
+            AppropriateInt::Normal(num) => num.into_pyobject(py)?.into_any(),
+            AppropriateInt::Big(num) => num.into_pyobject(py)?.into_any(),
+        })
     }
 }
 
 pub fn supports_bigint() -> bool {
+    // TODO: I think both of these *do* support BigInt in recent PyO3 versions => test & lift
+    //       restriction
     #[cfg(any(Py_LIMITED_API, PyPy))]
     {
         return false;

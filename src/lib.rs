@@ -10,10 +10,12 @@ use crate::suitable_stream::{make_suitable_stream, SuitableStream};
 use compact_str::CompactString;
 use pyo3::exceptions::{PyIOError, PyValueError};
 use pyo3::prelude::*;
+use pyo3::types::PyInt;
 use std::borrow::BorrowMut;
 use std::num::ParseFloatError;
 use std::str::FromStr;
 use thiserror::Error;
+use unwrap_infallible::UnwrapInfallible;
 
 mod int;
 mod opaque_seek;
@@ -96,9 +98,8 @@ enum State {
 ///     unrelated to the actual tokenization progress. For seekable streams, the
 ///     improvement shouldn't be noticable.
 #[pyclass]
-#[pyo3(text_signature = "(stream, *, buffering=-1, correct_cursor=True)")]
 struct RustTokenizer {
-    stream: Box<dyn SuitableStream + Send>,
+    stream: Box<dyn SuitableStream + Send + Sync>,
     completed: bool,
     advance: bool,
     token: String,
@@ -117,9 +118,13 @@ fn is_delimiter(c: CharOrEof) -> bool {
     }
 }
 
-impl IntoPy<PyObject> for TokenType {
-    fn into_py(self, py: Python<'_>) -> PyObject {
-        (self as u32).into_py(py)
+impl<'py> IntoPyObject<'py> for TokenType {
+    type Target = PyInt;
+    type Output = Bound<'py, Self::Target>;
+    type Error = std::convert::Infallible;
+
+    fn into_pyobject(self, py: Python<'py>) -> Result<Self::Output, Self::Error> {
+        (self as u32).into_pyobject(py)
     }
 }
 
@@ -129,6 +134,8 @@ pub enum ParsingError {
     InvalidJson(String),
     #[error("Error due to limitation: {0}")]
     Limitation(String),
+    #[error("Python error")]
+    PythonError(PyErr),
     #[error("Unknown error")]
     Unknown,
 }
@@ -145,6 +152,12 @@ impl From<UnicodeError> for ParsingError {
     }
 }
 
+impl From<PyErr> for ParsingError {
+    fn from(e: PyErr) -> ParsingError {
+        ParsingError::PythonError(e)
+    }
+}
+
 enum Token {
     Operator(String),
     String_(String),
@@ -158,7 +171,7 @@ enum Token {
 impl RustTokenizer {
     #[new]
     #[pyo3(signature = (stream, *, buffering = -1, correct_cursor = true))]
-    fn new(stream: PyObject, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
+    fn new(stream: Py<PyAny>, buffering: i64, correct_cursor: bool) -> PyResult<Self> {
         let buffering_mode = if buffering < 0 {
             BufferingMode::DontCare
         } else if buffering == 0 || buffering == 1 {
@@ -186,7 +199,7 @@ impl RustTokenizer {
     fn __next__(
         mut slf: PyRefMut<'_, Self>,
         py: Python<'_>,
-    ) -> PyResult<Option<(TokenType, Option<PyObject>)>> {
+    ) -> PyResult<Option<(TokenType, Option<Py<PyAny>>)>> {
         let mut now_token;
         loop {
             if slf.advance {
@@ -247,9 +260,7 @@ impl RustTokenizer {
                     // final token
                     Ok(Some(now_token))
                 }
-                None => {
-                    Ok(None)
-                }
+                None => Ok(None),
             }
         } else {
             Ok(None)
@@ -297,13 +308,36 @@ impl RustTokenizer {
         slf: &mut Self,
         py: Python<'_>,
         c: CharOrEof,
-    ) -> Result<Option<(TokenType, Option<PyObject>)>, ParsingError> {
+    ) -> Result<Option<(TokenType, Option<Py<PyAny>>)>, ParsingError> {
         match RustTokenizer::process_char(slf.borrow_mut(), c) {
-            Ok(Some(Token::Operator(s))) => Ok(Some((TokenType::Operator, Some(s.into_py(py))))),
-            Ok(Some(Token::String_(s))) => Ok(Some((TokenType::String_, Some(s.into_py(py))))),
-            Ok(Some(Token::Integer(n))) => Ok(Some((TokenType::Number, Some(n.into_py(py))))),
-            Ok(Some(Token::Float(f))) => Ok(Some((TokenType::Number, Some(f.into_py(py))))),
-            Ok(Some(Token::Boolean(b))) => Ok(Some((TokenType::Boolean, Some(b.into_py(py))))),
+            Ok(Some(Token::Operator(s))) => Ok(Some((
+                TokenType::Operator,
+                Some(s.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            Ok(Some(Token::String_(s))) => Ok(Some((
+                TokenType::String_,
+                Some(s.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            Ok(Some(Token::Integer(n))) => Ok(Some((
+                TokenType::Number,
+                Some(n.into_pyobject(py)?.unbind().into_any()),
+            ))),
+            Ok(Some(Token::Float(f))) => Ok(Some((
+                TokenType::Number,
+                Some(f.into_pyobject(py).unwrap_infallible().unbind().into_any()),
+            ))),
+            // TODO: Why do we need to_owned() for the bool but not the others? May be fixed in
+            //       more recent PyO3 versions?
+            Ok(Some(Token::Boolean(b))) => Ok(Some((
+                TokenType::Boolean,
+                Some(
+                    b.into_pyobject(py)
+                        .unwrap_infallible()
+                        .to_owned()
+                        .unbind()
+                        .into_any(),
+                ),
+            ))),
             Ok(Some(Token::Null)) => Ok(Some((TokenType::Null, None))),
             Ok(None) => Ok(None),
             Err(e) => Err(e),
@@ -401,7 +435,10 @@ impl RustTokenizer {
                             )));
                         }
                         Err(ParseIntError::TooLargeOrSmall) => {
-                            return Err(ParsingError::Limitation("Incapable of parsing integer due to platform constraint".to_string()));
+                            return Err(ParsingError::Limitation(
+                                "Incapable of parsing integer due to platform constraint"
+                                    .to_string(),
+                            ));
                         }
                     }
                     slf.advance = false;
@@ -490,7 +527,9 @@ impl RustTokenizer {
                     slf.advance = false;
                 }
                 _ => {
-                    return Err(ParsingError::InvalidJson("A number must include only digits".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "A number must include only digits".to_string(),
+                    ));
                 }
             },
             State::FloatingPoint0 => match c {
@@ -499,7 +538,10 @@ impl RustTokenizer {
                     add_char = true;
                 }
                 _ => {
-                    return Err(ParsingError::InvalidJson("A number with a decimal point must be followed by a fractional part".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "A number with a decimal point must be followed by a fractional part"
+                            .to_string(),
+                    ));
                 }
             },
             State::False1 => match c {
@@ -683,7 +725,9 @@ impl RustTokenizer {
                         slf.unicode_buffer.push(c);
                     }
                     Eof => {
-                        return Err(ParsingError::InvalidJson("Unterminated unicode literal at end of file".to_string()));
+                        return Err(ParsingError::InvalidJson(
+                            "Unterminated unicode literal at end of file".to_string(),
+                        ));
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
@@ -717,10 +761,14 @@ impl RustTokenizer {
                     slf.next_state = State::UnicodeSurrogateStringEscape;
                 }
                 Char(_) => {
-                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "Unpaired UTF-16 surrogate".to_string(),
+                    ));
                 }
                 Eof => {
-                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate at end of file".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "Unpaired UTF-16 surrogate at end of file".to_string(),
+                    ));
                 }
             },
             State::UnicodeSurrogateStringEscape => match c {
@@ -729,10 +777,14 @@ impl RustTokenizer {
                     slf.next_state = State::UnicodeSurrogate;
                 }
                 Char(_) => {
-                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "Unpaired UTF-16 surrogate".to_string(),
+                    ));
                 }
                 Eof => {
-                    return Err(ParsingError::InvalidJson("Unpaired UTF-16 surrogate at end of file".to_string()));
+                    return Err(ParsingError::InvalidJson(
+                        "Unpaired UTF-16 surrogate at end of file".to_string(),
+                    ));
                 }
             },
             State::UnicodeSurrogate => {
@@ -741,7 +793,9 @@ impl RustTokenizer {
                         slf.unicode_buffer.push(c);
                     }
                     Eof => {
-                        return Err(ParsingError::InvalidJson("Unterminated unicode literal at end of file".to_string()));
+                        return Err(ParsingError::InvalidJson(
+                            "Unterminated unicode literal at end of file".to_string(),
+                        ));
                     }
                 }
                 if slf.unicode_buffer.len() == 4 {
@@ -752,10 +806,14 @@ impl RustTokenizer {
                         )));
                     };
                     if !is_surrogate(charcode) {
-                        return Err(ParsingError::InvalidJson("Second half of UTF-16 surrogate pair is not a surrogate!".to_string()));
+                        return Err(ParsingError::InvalidJson(
+                            "Second half of UTF-16 surrogate pair is not a surrogate!".to_string(),
+                        ));
                     }
                     let Some(prev_charcode) = slf.prev_charcode else {
-                        return Err(ParsingError::InvalidJson("This should never happen, please report it as a bug...".to_string()));
+                        return Err(ParsingError::InvalidJson(
+                            "This should never happen, please report it as a bug...".to_string(),
+                        ));
                     };
                     c = Char(decode_surrogate_pair(prev_charcode, charcode).map_err(|_| {
                         ParsingError::InvalidJson(format!(
@@ -790,7 +848,7 @@ fn supports_bigint() -> PyResult<bool> {
 }
 
 #[pymodule]
-fn json_stream_rs_tokenizer(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn json_stream_rs_tokenizer(_py: Python<'_>, m: &Bound<PyModule>) -> PyResult<()> {
     m.add_class::<RustTokenizer>()?;
     m.add_wrapped(wrap_pyfunction!(supports_bigint))?;
 
