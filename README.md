@@ -140,3 +140,9 @@ manually.
 MIT license. Refer to the
 [LICENSE](https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/LICENSE)
 file for details.
+
+## Changelog
+
+Refer to the
+[CHANGELOG.md](https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/CHANGELOG.md)
+file.
