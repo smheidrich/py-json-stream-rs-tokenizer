@@ -43,7 +43,7 @@ setup(
             "typer>=0.6,<0.7",
         ],
         "test": [
-            "pytest>7.1,<8",
+            "pytest>8.4,<9",
             "json-stream-rs-tokenizer[benchmark]",
             "json-stream==2.3.2",
         ],
