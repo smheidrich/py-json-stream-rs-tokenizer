@@ -27,7 +27,10 @@ setup(
     project_urls={
         "Repository": (
             "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
-        )
+        ),
+        "Changelog": (
+            "https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/CHANGELOG.md"
+        ),
     },
     python_requires=">=3.8,<3.15",
     install_requires=[],
