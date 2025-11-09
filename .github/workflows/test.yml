@@ -73,6 +73,8 @@ jobs:
         run: |
           pytest
       - name: Run Mypy stubtest
+        # XXX doesn't work on Pypy due to some symtable issues...
+        if: "!startsWith(matrix.python-version, 'pypy')"
         run: |
           stubtest --ignore-disjoint-bases --allowlist stubtest-allowlist json_stream_rs_tokenizer
       - name: Save Rust/Cargo cache
