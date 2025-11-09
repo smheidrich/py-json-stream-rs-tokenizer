@@ -24,14 +24,14 @@ try:
 
     # included only for backwards-compatibility - to the outside world, bigint
     # is now always supported via fallback to conversion in Python
-    def supports_bigint():
+    def supports_bigint() -> bool:
         return True
 
     if _supports_bigint():
         RustTokenizer = _RustTokenizer
     else:
 
-        class RustTokenizer:
+        class RustTokenizer:  # type: ignore[no-redef]
             """
             Rust tokenizer (fallback wrapper for integer conversion)
             """
@@ -111,7 +111,7 @@ def load(fp, persistent=False):
     """
     Run json-stream's `load` but using the Rust tokenizer.
     """
-    import json_stream
+    import json_stream  # type: ignore[import-untyped]
 
     return json_stream.load(
         fp, persistent, tokenizer=rust_tokenizer_or_raise()
@@ -122,6 +122,6 @@ def visit(fp, visitor):
     """
     Run json-stream's `visit` but using the Rust tokenizer.
     """
-    import json_stream
+    import json_stream  # type: ignore[import-untyped]
 
     return json_stream.visit(fp, visitor, tokenizer=rust_tokenizer_or_raise())

@@ -1,7 +1,7 @@
 from sys import stderr
 
 import typer
-from si_prefix import si_parse
+from si_prefix import si_parse  # type: ignore[import-untyped]
 
 from . import app
 

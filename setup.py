@@ -47,6 +47,10 @@ setup(
             "json-stream-rs-tokenizer[benchmark]",
             "json-stream==2.3.2",
         ],
+        "stubtest": [
+            "mypy>=1,<2",
+            "types-tqdm",  # not specifying version b/c it should match tqdm
+        ],
     },
     classifiers=[
         "Programming Language :: Rust",
