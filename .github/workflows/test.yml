@@ -73,8 +73,14 @@ jobs:
         run: |
           pytest
       - name: Run Mypy stubtest
-        # XXX doesn't work on Pypy due to some symtable issues...
-        if: "!startsWith(matrix.python-version, 'pypy')"
+        # XXX doesn't work on Pypy due to some symtable issues and on Windows
+        #     with Python 3.8 due to pathlib issues...
+        if: >
+          !startsWith(matrix.python-version, 'pypy')
+          && !(
+            startsWith(matrix.python-version, '3.8')
+            && startsWith(matrix.os, 'windows-')
+          )
         run: >
           stubtest
           ${{
