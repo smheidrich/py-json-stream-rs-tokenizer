@@ -62,7 +62,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -v -e .[test]
+          pip install -v -e .[test,stubtest]
         shell: bash
       - name: Run Cargo tests
         run: |
@@ -72,6 +72,9 @@ jobs:
       - name: Run pytest tests
         run: |
           pytest
+      - name: Run Mypy stubtest
+        run: |
+          stubtest --ignore-disjoint-bases --allowlist stubtest-allowlist json_stream_rs_tokenizer
       - name: Save Rust/Cargo cache
         uses: actions/cache/save@v4
         if: always()

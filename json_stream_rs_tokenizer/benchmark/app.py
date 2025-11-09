@@ -4,10 +4,11 @@ from functools import partial
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import json_stream as js
-from contexttimer import Timer
-from json_stream.tokenizer import tokenize as pure_python_tokenizer
-from json_stream_to_standard_types import to_standard_types
+import json_stream as js  # type: ignore[import-untyped]
+from contexttimer import Timer  # type: ignore[import-untyped]
+from json_stream.tokenizer import tokenize as pure_python_tokenizer  # type: ignore[import-untyped]
+from json_stream_to_standard_types import to_standard_types  # type: ignore[import-untyped]
+
 from tqdm import tqdm
 
 import json_stream_rs_tokenizer as jsrs
