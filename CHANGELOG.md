@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.32
+
+- Added type stub files (written by hand so may contain errors)
+
 ## 0.4.31
 
 - **Interface changes:**
