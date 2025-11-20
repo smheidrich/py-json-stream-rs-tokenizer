@@ -77,7 +77,7 @@ jobs:
           cat "$GITHUB_ENV"
         shell: bash
       - name: Build wheels
-        uses: pypa/cibuildwheel@v3.2.1
+        uses: pypa/cibuildwheel@v3.3.0
         env:
           CIBW_ENABLE: >
             pypy
