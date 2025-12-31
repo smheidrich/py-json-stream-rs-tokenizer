@@ -1,6 +1,13 @@
 """
 Regression test for overconsumption of stream contents past the end of a doc:
 https://github.com/smheidrich/py-json-stream-rs-tokenizer/issues/47
+
+Note that starting in version 0.5, these fixes *always* require explicit opt-in
+from the user via `correct_cursor=True`. Prior to that, they worked by default
+for unseekable streams, at the cost of severely degraded performance.
+For seekable streams, they never worked, because that would have required
+json-stream to call `park_cursor()` (which performs the seeking that allows
+having a correct cursor at the end of a document without degraded performance).
 """
 from io import BytesIO, StringIO
 
@@ -21,6 +28,7 @@ def to_bytes_or_str(to_bytes_or_str_buf):
 
 
 # this test requires a version of json-stream that supports park_cursor()
+# and forwarding of correct_cursor to the tokenizer
 @pytest.mark.xfail(reason="json-stream chicken and egg problem")
 @pytest.mark.parametrize(
     "s,expected_cursor_pos",
@@ -36,7 +44,7 @@ def test_overconsumption_load_ends_at_doc_end(
     s, expected_cursor_pos, to_bytes_or_str_buf
 ):
     buf = to_bytes_or_str_buf(s)
-    list(load(buf))
+    list(load(buf, correct_cursor=True))
     assert buf.tell() == expected_cursor_pos
 
 
@@ -54,10 +62,10 @@ def test_overconsumption_park_cursor_skip_3_chars_and_continue(
     s, expected_str_cursor_pos, expected_bytes_cursor_pos, to_bytes_or_str_buf
 ):
     """
-    Principal regression test for overconsumption.
+    Test that correct_cursor=True & park_cursor() together fix overconsumption.
     """
     buf = to_bytes_or_str_buf(s)
-    tokenizer = RustTokenizer(buf)
+    tokenizer = RustTokenizer(buf, correct_cursor=True)
     for kind, val in tokenizer:
         if val == "}":
             break
