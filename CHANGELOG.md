@@ -1,5 +1,40 @@
 # Changelog
 
+## 0.5.0
+
+- **Potentially breaking changes:**
+  - Changed the default of `correct_cursor` from `True` to `False`.
+
+    Previously, `correct_cursor` defaulting to `True` meant that the tokenizer
+    would take care of always leaving the stream cursor of *unseekable* streams
+    (and only those!) at a position matching the extent to which it has parsed
+    that stream into tokens, and no further. This came at the cost of severely
+    degraded performance, because it meant reading the stream byte-by-byte
+    instead of the much more performant option of buffering ahead in large
+    chunks.
+
+    For *seekable* streams, nothing changes, because for those,
+    `correct_cursor=True` always used buffering (and still does) and doesn't
+    actually leave the cursor in the "correct" position (matching the
+    tokenization extent) by default: The only effect of `correct_cursor=True`
+    for seekable streams was and is to "remember" the position up to which the
+    stream has been tokenized, and only a call of `RustTokenizer.park_cursor()`
+    causes the cursor to be "reset" back to this position.
+
+    If you've been relying on the previous behavior for unseekable streams,
+    you can recover it by explicitly instantiating `RustTokenizer` with
+    `correct_cursor=True`. As `json-stream` is normally what instantiates the
+    tokenizer (the `tokenizer` parameter of its `load` function actually takes
+    a tokenizer "factory"), you can cause _it_ to instantiate it with
+    `correct_cursor` set using `functools.partial`:
+
+    ```python
+    from functools import partial
+    from json_stream import load
+
+    load(..., tokenizer=partial(RustTokenizer, correct_cursor=True))
+    ```
+
 ## 0.4.32
 
 - Added type stub files (written by hand so may contain errors)
