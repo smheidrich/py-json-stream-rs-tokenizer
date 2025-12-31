@@ -19,6 +19,7 @@ else
   echo "Rust toolchain already installed/restored, not downloading again"
 fi
 rustup target add aarch64-apple-darwin
+rustup target add x86_64-apple-darwin
 
 # try to restore Rust target dir from cache
 ver=$( \
