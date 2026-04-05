@@ -80,6 +80,15 @@ enum State {
     UnicodeSurrogateStart = 23,
     UnicodeSurrogateStringEscape = 24,
     UnicodeSurrogate = 25,
+    NaN1 = 26,
+    NaN2 = 27,
+    Inf1 = 28,
+    Inf2 = 29,
+    Inf3 = 30,
+    Inf4 = 31,
+    Inf5 = 32,
+    Inf6 = 33,
+    Inf7 = 34,
 }
 
 /// A drop-in replacement for json-stream's JSON tokenizer, written in Rust.
@@ -136,6 +145,8 @@ pub enum ParsingError {
     Limitation(String),
     #[error("Python error")]
     PythonError(PyErr),
+    #[error("Bug in json-stream-rs-tokenizer: {0}")]
+    BugError(String),
     #[error("Unknown error")]
     Unknown,
 }
@@ -401,6 +412,12 @@ impl RustTokenizer {
                 Char('n') => {
                     slf.next_state = State::Null1;
                 }
+                Char('N') => {
+                    slf.next_state = State::NaN1;
+                }
+                Char('I') => {
+                    slf.next_state = State::Inf1;
+                }
                 Char(c_) => {
                     if !c_.is_whitespace() {
                         return Err(ParsingError::InvalidJson(format!(
@@ -479,9 +496,12 @@ impl RustTokenizer {
                     slf.next_state = State::Integer;
                     add_char = true;
                 }
+                Char('I') => {
+                    slf.next_state = State::Inf1;
+                }
                 c_ => {
                     return Err(ParsingError::InvalidJson(format!(
-                        "A - must be followed by a digit.  Got {c_:?}"
+                        "A - must be followed by a digit or Infinity.  Got {c_:?}"
                     )));
                 }
             },
@@ -643,6 +663,108 @@ impl RustTokenizer {
                     slf.next_state = State::Whitespace;
                     slf.completed = true;
                     now_token = Some(Token::Null);
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::NaN1 => match c {
+                Char('a') => {
+                    slf.next_state = State::NaN2;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::NaN2 => match c {
+                Char('N') => {
+                    slf.next_state = State::Whitespace;
+                    slf.completed = true;
+                    now_token = Some(Token::Float(f64::NAN));
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf1 => match c {
+                Char('n') => {
+                    slf.next_state = State::Inf2;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf2 => match c {
+                Char('f') => {
+                    slf.next_state = State::Inf3;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf3 => match c {
+                Char('i') => {
+                    slf.next_state = State::Inf4;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf4 => match c {
+                Char('n') => {
+                    slf.next_state = State::Inf5;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf5 => match c {
+                Char('i') => {
+                    slf.next_state = State::Inf6;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf6 => match c {
+                Char('t') => {
+                    slf.next_state = State::Inf7;
+                }
+                _ => {
+                    return Err(ParsingError::InvalidJson(format!(
+                        "Invalid JSON character: {c:?}"
+                    )));
+                }
+            },
+            State::Inf7 => match c {
+                Char('y') => {
+                    slf.next_state = State::Whitespace;
+                    slf.completed = true;
+                    now_token = Some(match slf.token.as_str() {
+                        "" => Token::Float(f64::INFINITY),
+                        "-" => Token::Float(f64::NEG_INFINITY),
+                        nonsense => {
+                            return Err(ParsingError::BugError(format!(
+                            "Got something ({nonsense:?}) other than '-' for the sign of Infinity"
+                        )))
+                        }
+                    });
                 }
                 _ => {
                     return Err(ParsingError::InvalidJson(format!(
