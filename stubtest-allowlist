@@ -1,1 +1,2 @@
 json_stream_rs_tokenizer.RustTokenizer-redefinition
+(json_stream_rs_tokenizer\.benchmark\.cli\.run)?
