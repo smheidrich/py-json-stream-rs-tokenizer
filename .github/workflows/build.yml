@@ -6,7 +6,7 @@ on:
       - 'v[0-9]*'
     #branches:
       #- main
-  #pull_request:
+  pull_request:
   # ^ uncomment when testing changes to build
 
 concurrency:
@@ -178,5 +178,5 @@ jobs:
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
         # testing:
-        #with:
-          #repository_url: https://test.pypi.org/legacy/
+        with:
+          repository_url: https://test.pypi.org/legacy/
