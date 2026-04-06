@@ -14,7 +14,7 @@ owned_chars = ">=0.3.2,<0.4"
 # TODO: Migrate off py-clone as recommended in
 # https://pyo3.rs/v0.27.1/migration.html?highlight=bound#pyclone-is-now-gated-behind-the-py-clone-feature
 pyo3 = { version = ">=0.27,<0.28", features = ["num-bigint", "py-clone"] }
-thiserror = ">=1.0.37,<2"
+thiserror = ">=1.0.37, <3"
 utf8-chars = ">=2.0.2,<3"
 compact_str = ">=0.7.1,<0.8"
 utf8-io = ">=0.16.0,<0.17"
