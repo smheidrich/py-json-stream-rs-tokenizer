@@ -6,6 +6,9 @@
   - Added support for parsing `NaN` and `Infinity`/`-Infinity` as
     `float("nan")` and `float("inf")`/`float("-inf")`, respectively (same as
     Python's own `json` module).
+- **Compatibility changes:**
+  - Dropped 32-bit Windows support for now (might be reintroduced later, see
+    [#153](https://github.com/smheidrich/py-json-stream-rs-tokenizer/issues/153))
 
 ## 0.5.0
 
