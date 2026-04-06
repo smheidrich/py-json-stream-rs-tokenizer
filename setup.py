@@ -45,7 +45,7 @@ setup(
         "test": [
             "pytest>7.1,<8",
             "json-stream-rs-tokenizer[benchmark]",
-            "json-stream==2.3.2",
+            "json-stream==2.3.3",
         ],
         "stubtest": [
             "mypy>=1,<2",
