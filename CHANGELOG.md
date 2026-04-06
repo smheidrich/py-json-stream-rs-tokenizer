@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.1
+
+- **New features:**
+  - Added support for parsing `NaN` and `Infinity`/`-Infinity` as
+    `float("nan")` and `float("inf")`/`float("-inf")`, respectively (same as
+    Python's own `json` module).
+
 ## 0.5.0
 
 - **Potentially breaking changes:**
