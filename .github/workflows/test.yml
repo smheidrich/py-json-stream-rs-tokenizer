@@ -18,14 +18,14 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.14"]
-        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2022, macos-15]
+        os: [ubuntu-22.04, ubuntu-22.04-arm, windows-2025, macos-15]
         include:
           # set OS-specific cache paths
           - os: ubuntu-22.04
             path: ~/.cache/pip
           - os: ubuntu-22.04-arm
             path: ~/.cache/pip
-          - os: windows-2022
+          - os: windows-2025
             path: ~\AppData\Local\pip\Cache
           - os: macos-15
             path: ~/Library/Caches/pip
