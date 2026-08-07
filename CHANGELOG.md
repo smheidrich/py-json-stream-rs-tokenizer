@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.2
+
+- **Compliance fixes:**
+  - All releases prior to this one were in violation of the Rust dependencies'
+    licenses, because they didn't include the respective license texts. This
+    has been fixed now - my apologies to the dependencies' authors. To minimize
+    disruption to users, I'll only take violating packages down upon request.
+
 ## 0.5.1
 
 - **New features:**
