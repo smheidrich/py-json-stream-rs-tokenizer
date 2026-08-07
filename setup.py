@@ -23,7 +23,7 @@ setup(
     readme="README.md",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license_files=["LICENSE", "LICENSES-DEPS.html", "LICENSES-RUST.md"],
+    license_files=["LICENSE", "LICENSES-RUST-DEPS.html", "LICENSES-RUST.html"],
     project_urls={
         "Repository": (
             "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
