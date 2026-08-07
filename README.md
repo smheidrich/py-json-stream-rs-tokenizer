@@ -137,9 +137,18 @@ manually.
 
 ## License
 
-MIT license. Refer to the
+The project's code itself is provided under the MIT license.
+Refer to the
 [LICENSE](https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/LICENSE)
 file for details.
+The library binaries shipped in Python wheels have 3rd party dependencies
+compiled in under different, but similarly permissive licenses. Refer to
+[LICENSES-RUST-DEPS.html](https://htmlpreview.github.io/?https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/LICENSES-RUST-DEPS.html)
+(dependency crates)
+and
+[LICENSES-RUST.html](https://htmlpreview.github.io/?https://github.com/smheidrich/py-json-stream-rs-tokenizer/blob/main/LICENSES-RUST.html)
+(Rust itself, stdlib etc.)
+for more information.
 
 ## Changelog
 

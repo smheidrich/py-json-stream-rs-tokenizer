@@ -23,7 +23,7 @@ setup(
     readme="README.md",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license_files=["LICENSE"],
+    license_files=["LICENSE", "LICENSES-DEPS.html", "LICENSES-RUST.md"],
     project_urls={
         "Repository": (
             "https://github.com/smheidrich/py-json-stream-rs-tokenizer"
@@ -63,6 +63,5 @@ setup(
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
         "Programming Language :: Python :: 3.14",
-        "License :: OSI Approved :: MIT License",
     ],
 )
