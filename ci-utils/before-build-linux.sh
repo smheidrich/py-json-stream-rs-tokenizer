@@ -30,15 +30,13 @@ else
 fi
 
 # install SBOM utils:
-# check if cargo binstall avail and download if not
-if ! cargo binstall -V; then
-  curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+# check if cargo cyclonedx avail and download if not
+if ! cargo cyclonedx -V; then
+  curl --proto '=https' --tlsv1.2 -LsSf https://github.com/CycloneDX/cyclonedx-rust-cargo/releases/download/cargo-cyclonedx-0.5.9/cargo-cyclonedx-installer.sh | sh
 else
-  echo "cargo binstall already installed/restored, not downloading again"
+  echo "cargo-cyclonedx already installed/restored, not downloading again"
 fi
-# install SBOM utils (we use musl because GNU has some glibc version issues...)
-cargo binstall -y --targets x86_64-unknown-linux-musl cargo-cyclonedx
-cargo cyclonedx --version
+cargo cyclonedx -V
 # /install SBOM utils
 
 # try to restore Rust target dir from cache
