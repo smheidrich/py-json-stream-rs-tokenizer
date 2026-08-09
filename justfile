@@ -7,3 +7,13 @@ licenses:
   cp \
     $(rustc --print sysroot)/share/doc/rust/COPYRIGHT-library.html \
     LICENSES-RUST.html
+
+# Note: We put one SBOM file for all target archs into the repo instead of
+# generating it separately for each target arch during CI, because the latter
+# requires the `cargo-cyclonedx` binaries' glibc version and the one used in
+# the `manylinux` container to match, which they didn't the last time I tried.
+sbom:
+  # Requires
+  # [`cargo-cyclonedx`](https://github.com/CycloneDX/cyclonedx-rust-cargo)
+  # to be installed:
+  cargo cyclonedx --target all

@@ -20,16 +20,6 @@ else
 fi
 rustup target add i686-pc-windows-msvc
 
-# install SBOM utils:
-# check if cargo cyclonedx avail and download if not
-if ! cargo cyclonedx -V; then
-  curl --proto '=https' --tlsv1.2 -LsSf https://github.com/CycloneDX/cyclonedx-rust-cargo/releases/download/cargo-cyclonedx-0.5.9/cargo-cyclonedx-installer.sh | sh
-else
-  echo "cargo-cyclonedx already installed/restored, not downloading again"
-fi
-cargo cyclonedx -V
-# /install SBOM utils
-
 # try to restore Rust target dir from cache
 ver=$( \
   python3 -c \
