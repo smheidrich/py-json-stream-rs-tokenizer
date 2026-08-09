@@ -29,6 +29,18 @@ else
   echo "Rust toolchain already installed/restored, not downloading again"
 fi
 
+# install SBOM utils:
+# check if cargo binstall avail and download if not
+if ! cargo binstall -V; then
+  curl -L --proto '=https' --tlsv1.2 -sSf https://raw.githubusercontent.com/cargo-bins/cargo-binstall/main/install-from-binstall-release.sh | bash
+else
+  echo "cargo binstall already installed/restored, not downloading again"
+fi
+# install SBOM utils (we use musl because GNU has some glibc version issues...)
+cargo binstall -y --targets x86_64-unknown-linux-musl cargo-cyclonedx
+cargo cyclonedx --version
+# /install SBOM utils
+
 # try to restore Rust target dir from cache
 ver=$( \
   python3 -c \
