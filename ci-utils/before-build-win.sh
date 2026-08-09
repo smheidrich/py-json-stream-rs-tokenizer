@@ -28,3 +28,6 @@ ver=$( \
 rm -rf "$HOST_HOME_DIR_UNIX/target"
 mv "$HOST_HOME_DIR_UNIX/cargo-target-dirs/$ver/target" "$HOST_HOME_DIR_UNIX/" \
 || echo "Could not restore Cargo target dir from cache"
+
+# install delvewheel (only needed while we're on cibuildwheel < 4)
+pip install delvewheel

@@ -138,7 +138,7 @@ jobs:
             bash $PROJ_DIR/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >
             python %PROJ_DIR%/ci-utils/add-sbom-to-wheel.py {wheel} &&
-            cp {wheel} {dest_dir} &&
+            delvewheel repair -w {dest_dir} -v {wheel} &&
             bash %PROJ_DIR%/ci-utils/after-build.sh
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: >
             python $PROJ_DIR/ci-utils/add-sbom-to-wheel.py {wheel} &&
