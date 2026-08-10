@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:7f80771a-3480-46bd-a80a-f46e057db63d" version="1">
+<bom xmlns="http://cyclonedx.org/schema/bom/1.3" serialNumber="urn:uuid:30aa5833-727e-4b09-a91e-dbf2529c7f5a" version="1">
   <metadata>
-    <timestamp>2026-08-09T23:02:23.961002465Z</timestamp>
+    <timestamp>2026-08-10T02:34:48.945809653Z</timestamp>
     <tools>
       <tool>
         <vendor>CycloneDX</vendor>
@@ -29,7 +29,7 @@
       </components>
     </component>
     <properties>
-      <property name="cdx:rustc:sbom:target:all_targets">true</property>
+      <property name="cdx:rustc:sbom:target:triple">x86_64-unknown-linux-gnu</property>
     </properties>
   </metadata>
   <components>
@@ -451,24 +451,6 @@
         </reference>
         <reference type="vcs">
           <url>https://github.com/durka/owned-chars</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#portable-atomic@1.11.1">
-      <name>portable-atomic</name>
-      <version>1.11.1</version>
-      <description>Portable atomic types including support for 128-bit atomics, atomic float, etc. </description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483</hash>
-      </hashes>
-      <licenses>
-        <expression>Apache-2.0 OR MIT</expression>
-      </licenses>
-      <purl>pkg:cargo/portable-atomic@1.11.1</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/taiki-e/portable-atomic</url>
         </reference>
       </externalReferences>
     </component>
@@ -934,177 +916,6 @@
         </reference>
       </externalReferences>
     </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.48.0">
-      <author>Microsoft</author>
-      <name>windows-sys</name>
-      <version>0.48.0</version>
-      <description>Rust for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">677d2418bec65e3338edb076e806bc1ec15693c5d0104683f2efe857f61056a9</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows-sys@0.48.0</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows-targets@0.48.5">
-      <author>Microsoft</author>
-      <name>windows-targets</name>
-      <version>0.48.5</version>
-      <description>Import libs for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">9a2fa6e2155d7247be68c096456083145c183cbbbc2764150dda45a87197940c</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows-targets@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_gnullvm@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_aarch64_gnullvm</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">2b38e32f0abccf9987a4e3079dfb67dcd799fb61361e53e2882c3cbaf0d905d8</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_aarch64_gnullvm@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_msvc@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_aarch64_msvc</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">dc35310971f3b2dbbf3f0690a219f40e2d9afcf64f9ab7cc1be722937c26b4bc</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_aarch64_msvc@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_gnu@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_i686_gnu</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">a75915e7def60c94dcef72200b9a8e58e5091744960da64ec734a6c6e9b3743e</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_i686_gnu@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_msvc@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_i686_msvc</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">8f55c233f70c4b27f66c523580f78f1004e8b5a8b659e05a4eb49d4166cca406</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_i686_msvc@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnu@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_x86_64_gnu</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">53d40abd2583d23e4718fddf1ebec84dbff8381c07cae67ff7768bbf19c6718e</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_x86_64_gnu@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnullvm@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_x86_64_gnullvm</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">0b7b52767868a23d5bab768e390dc5f5c55825b6d30b86c844ff2dc7414044cc</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_x86_64_gnullvm@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
-    <component type="library" bom-ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_msvc@0.48.5">
-      <author>Microsoft</author>
-      <name>windows_x86_64_msvc</name>
-      <version>0.48.5</version>
-      <description>Import lib for Windows</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="SHA-256">ed94fce61571a4006852b7389a063ab983c02eb1bb37b47f8272ce92d06d9538</hash>
-      </hashes>
-      <licenses>
-        <expression>MIT OR Apache-2.0</expression>
-      </licenses>
-      <purl>pkg:cargo/windows_x86_64_msvc@0.48.5</purl>
-      <externalReferences>
-        <reference type="vcs">
-          <url>https://github.com/microsoft/windows-rs</url>
-        </reference>
-      </externalReferences>
-    </component>
   </components>
   <dependencies>
     <dependency ref="git+https://github.com/smheidrich/utf8-read-rs.git?branch=configurable-chunk-size#utf8-read@0.4.0" />
@@ -1146,7 +957,6 @@
     </dependency>
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#io-extras@0.17.4">
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#io-lifetimes@1.0.11" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.48.0" />
     </dependency>
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#io-lifetimes@1.0.11" />
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#itoa@1.0.15" />
@@ -1168,7 +978,6 @@
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#owned_chars@0.3.2">
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#delegate-attr@0.2.9" />
     </dependency>
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#portable-atomic@1.11.1" />
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#proc-macro2@1.0.103">
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.20" />
     </dependency>
@@ -1199,7 +1008,6 @@
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#num-bigint@0.4.6" />
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#num-traits@0.2.19" />
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#once_cell@1.21.3" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#portable-atomic@1.11.1" />
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#pyo3-build-config@0.27.1" />
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#pyo3-ffi@0.27.1" />
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#pyo3-macros@0.27.1" />
@@ -1242,24 +1050,5 @@
       <dependency ref="registry+https://github.com/rust-lang/crates.io-index#io-lifetimes@1.0.11" />
     </dependency>
     <dependency ref="registry+https://github.com/rust-lang/crates.io-index#utf8-width@0.1.7" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows-sys@0.48.0">
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows-targets@0.48.5" />
-    </dependency>
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows-targets@0.48.5">
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_gnullvm@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_msvc@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_gnu@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_msvc@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnu@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnullvm@0.48.5" />
-      <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_msvc@0.48.5" />
-    </dependency>
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_gnullvm@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_aarch64_msvc@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_gnu@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_i686_msvc@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnu@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_gnullvm@0.48.5" />
-    <dependency ref="registry+https://github.com/rust-lang/crates.io-index#windows_x86_64_msvc@0.48.5" />
   </dependencies>
 </bom>
