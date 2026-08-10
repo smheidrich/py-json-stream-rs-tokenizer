@@ -106,3 +106,43 @@ jobs:
         with:
           path: ${{ matrix.path }}
           key: ${{ runner.os }}-${{ runner.arch }}-python-v3-${{ hashFiles('**/requirements.txt') }}
+  check-license-and-sbom-files:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: extractions/setup-just@v3
+        with:
+          just-version: 1.40.0
+      - name: Restore Rust/Cargo cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ runner.arch }}-rust-v4-${{ hashFiles('**/Cargo.lock') }}
+      - uses: cargo-bins/cargo-binstall@main
+        with:
+          version: "1.14.2"
+      - name: Install dependencies
+        run: cargo binstall -y cargo-about cargo-cyclonedx
+      - name: Generate license files
+        run: just licenses
+      - name: Generate SBOM file
+        run: just sbom
+      - name: Ensure there are no changes
+        run: |
+          git diff --exit-code
+      - name: Save Rust/Cargo cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-${{ runner.arch }}-rust-v4-${{ hashFiles('**/Cargo.lock') }}
