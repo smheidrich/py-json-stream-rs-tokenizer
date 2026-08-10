@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.3
+
+- **Compliance improvements:**
+  - Wheels now include SBOM metadata according to PEP 770.
+
 ## 0.5.2
 
 - **Compliance fixes:**
