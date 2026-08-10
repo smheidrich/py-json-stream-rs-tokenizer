@@ -136,8 +136,11 @@ jobs:
         run: |
           # We exclude LICENSES-RUST.html for now because the runners have
           # slightly different Rust versions; hopefully they add a feature for
-          # including Rust deps to cargo-about itself in the future
-          git diff --exit-code HEAD -- *.cdx.xml LICENSES-RUST-DEPS.html
+          # including Rust deps to cargo-about itself in the future.
+          # And we exclude the SBOM files for now, too, because they are not
+          # reproducible in the first place; see
+          # https://github.com/CycloneDX/cyclonedx-rust-cargo/issues/514
+          git diff --exit-code HEAD -- LICENSES-RUST-DEPS.html
       - name: Save Rust/Cargo cache
         uses: actions/cache/save@v4
         if: always()
