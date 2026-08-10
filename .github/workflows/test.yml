@@ -134,7 +134,10 @@ jobs:
         run: just sbom
       - name: Ensure there are no changes
         run: |
-          git diff --exit-code
+          # We exclude LICENSES-RUST.html for now because the runners have
+          # slightly different Rust versions; hopefully they add a feature for
+          # including Rust deps to cargo-about itself in the future
+          git diff --exit-code HEAD -- *.cdx.xml LICENSES-RUST-DEPS.html
       - name: Save Rust/Cargo cache
         uses: actions/cache/save@v4
         if: always()
