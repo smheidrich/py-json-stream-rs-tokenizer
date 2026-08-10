@@ -37,3 +37,6 @@ ver=$( \
 rm -rf "$HOST_HOME_DIR/target"
 mv "$HOST_HOME_DIR/cargo-target-dirs/$ver/target" "$HOST_HOME_DIR/" \
 || echo "Could not restore Cargo target dir from cache"
+
+# install wheel (for SBOM-adding script)
+pip install wheel
