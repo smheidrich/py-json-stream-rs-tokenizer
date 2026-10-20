@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.4
+
+- **Python/library compatibility changes:**
+  - Added support for Python 3.15.
+  - Dropped support for Python 3.8.
+    - As before (see 0.4.31), this is not treated as a breaking change due to
+      being masked by installers' resolution mechanism.
+
 ## 0.5.3
 
 - **Compliance improvements:**
