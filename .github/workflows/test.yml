@@ -116,7 +116,7 @@ jobs:
           key: ${{ runner.os }}-${{ runner.arch }}-rust-v4-${{ hashFiles('**/Cargo.lock') }}
       - uses: cargo-bins/cargo-binstall@main
         with:
-          version: "1.14.2"
+          version: "1.26.2"
       - name: Install dependencies
         run: cargo binstall -y cargo-about cargo-cyclonedx
       - name: Generate license files
