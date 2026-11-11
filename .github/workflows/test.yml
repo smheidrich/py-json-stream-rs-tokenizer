@@ -103,7 +103,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: extractions/setup-just@v3
         with:
-          just-version: 1.40.0
+          just-version: 1.59.0
       - name: Restore Rust/Cargo cache
         uses: actions/cache/restore@v4
         with:
